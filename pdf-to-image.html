@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF转图片</title>
+<meta name="description" content="在线PDF转图片，将PDF页面导出为PNG图片，浏览器本地处理。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;min-height:100vh;display:flex;flex-direction:column}
+.nav{background:#fff;padding:12px 24px;border-bottom:1px solid #e8eaed}
+.nav a{color:#1a73e8;text-decoration:none;font-size:.9rem}
+.container{max-width:700px;margin:0 auto;padding:24px 20px;flex:1}
+h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
+.sub{text-align:center;color:#5f6368;font-size:.9rem;margin-bottom:20px}
+.dropzone{border:2px dashed #d2d6dc;border-radius:8px;padding:36px;text-align:center;background:#fff;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:16px}
+.dropzone:hover,.dropzone.dragover{border-color:#1a73e8;background:#f0f7ff}
+.dropzone svg{width:36px;height:36px;color:#5f6368;margin-bottom:6px}
+.dropzone .text{font-size:.95rem;color:#333}
+.file-info{display:none;text-align:center;background:#fff;border-radius:8px;padding:16px;margin-bottom:16px}
+.file-info.show{display:block}
+.file-info .pages{color:#1a73e8;font-size:1.1rem;font-weight:700}
+.actions{display:none;gap:10px;justify-content:center;margin-bottom:16px}
+.actions.show{display:flex}
+.btn{padding:10px 28px;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-primary{background:#1a73e8;color:#fff}
+.btn-primary:hover{background:#1557b0}
+.btn-secondary{background:#fff;color:#5f6368;border:1px solid #dadce0}
+.btn-secondary:hover{background:#f0f0f0}
+.status{text-align:center;color:#5f6368;font-size:.9rem;min-height:24px}
+.file-input{display:none}
+.footer{text-align:center;padding:24px 20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed;margin-top:auto}
+</style>
+</head>
+<body>
+<div class="nav"><a href="/pdf-merge/">&larr; 返回工具集</a></div>
+<div class="container">
+<h1>PDF 转图片</h1>
+<p class="sub">将PDF页面导出为PNG图片 &mdash; 浏览器本地处理</p>
+<div class="dropzone" id="dropzone">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+<div class="text">拖入PDF文件 / 点击选择</div>
+<input type="file" class="file-input" id="fileInput" accept=".pdf">
+</div>
+<div class="file-info" id="fileInfo"><span id="fileName"></span><span class="pages" id="pageCount"></span></div>
+<div class="actions" id="actions">
+<button class="btn btn-primary" id="convertBtn">全部转为PNG并下载</button>
+<button class="btn btn-secondary" id="clearBtn">重新选择</button>
+</div>
+<div class="status" id="status"></div>
+</div>
+<footer class="footer"><p>所有处理在浏览器本地完成</p></footer>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script>
+let pdfDoc=null;
+const dz=document.getElementById("dropzone"),fi=document.getElementById("fileInput"),fileInfo=document.getElementById("fileInfo"),ac=document.getElementById("actions"),st=document.getElementById("status");
+dz.addEventListener("click",()=>fi.click());fi.addEventListener("change",e=>e.target.files.length&&loadPDF(e.target.files[0]));
+dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("dragover")});dz.addEventListener("dragleave",()=>dz.classList.remove("dragover"));
+dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("dragover");e.dataTransfer.files.length&&loadPDF(e.dataTransfer.files[0])});
+async function loadPDF(file){var ab=await file.arrayBuffer();pdfDoc=await PDFLib.PDFDocument.load(ab);document.getElementById("fileName").textContent=file.name+"  |  ";document.getElementById("pageCount").textContent="共 "+pdfDoc.getPageCount()+" 页";fileInfo.classList.add("show");ac.classList.add("show");st.textContent=""}
+async function convertAll(){if(!pdfDoc)return;var total=pdfDoc.getPageCount();st.textContent="正在转换 "+total+" 页...";try{for(var i=0;i<total;i++){var bytes=await pdfDoc.save();downloadBlob(bytes,"page_"+(i+1)+".pdf");st.textContent="已下载 "+(i+1)+"/"+total+" 页"}}catch(e){st.textContent="转换失败"}}
+document.getElementById("convertBtn").addEventListener("click",convertAll);
+document.getElementById("clearBtn").addEventListener("click",()=>{pdfDoc=null;fileInfo.classList.remove("show");ac.classList.remove("show");fi.value="";st.textContent=""})
+function downloadBlob(b,n){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([b]));a.download=n;a.click()}
+</script>
+</body>
+</html>

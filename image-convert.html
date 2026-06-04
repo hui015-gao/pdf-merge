@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="在线图片格式转换，支持JPG/PNG/WebP互转。浏览器本地处理。">
+<title>图片格式转换 - JPG/PNG/WebP互转</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;min-height:100vh;display:flex;flex-direction:column}
+.nav{background:#fff;padding:12px 24px;border-bottom:1px solid #e8eaed}
+.nav a{color:#1a73e8;text-decoration:none;font-size:.9rem}
+.container{max-width:600px;margin:0 auto;padding:24px 20px;flex:1}
+h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
+.sub{text-align:center;color:#5f6368;font-size:.9rem;margin-bottom:20px}
+.dropzone{border:2px dashed #d2d6dc;border-radius:8px;padding:36px 24px;text-align:center;background:#fff;transition:border-color .2s,background .2s;cursor:pointer;margin-bottom:16px}
+.dropzone:hover,.dropzone.dragover{border-color:#1a73e8;background:#f0f7ff}
+.dropzone svg{width:36px;height:36px;color:#5f6368;margin-bottom:6px}
+.dropzone .text{font-size:.95rem;color:#333}
+.dropzone .hint{font-size:.8rem;color:#80868b}
+.dz2 .formats{display:none;margin-top:12px;flex-direction:column;gap:8px}
+.dz2 .formats.show{display:flex}
+.dz2 select{padding:8px 12px;border:1px solid #dadce0;border-radius:6px;font-size:.9rem;margin-right:8px}
+.preview{display:none;margin-top:16px;text-align:center}
+.preview.show{display:block}
+.preview img{max-width:100%;max-height:250px;border-radius:6px}
+.actions{display:none;margin-top:16px;gap:10px;justify-content:center}
+.actions.show{display:flex}
+.btn{padding:10px 28px;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-primary{background:#1a73e8;color:#fff}
+.btn-primary:hover{background:#1557b0}
+.btn-secondary{background:#fff;color:#5f6368;border:1px solid #dadce0}
+.btn-secondary:hover{background:#f0f0f0}
+.file-input{display:none}
+.footer{text-align:center;padding:24px 20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed;margin-top:auto}
+</style>
+</head>
+<body>
+<div class="nav"><a href="/pdf-merge/">&larr; 返回工具集</a></div>
+<div class="container">
+<h1>图片格式转换</h1>
+<p class="sub">JPG / PNG / WebP 互转 &mdash; 浏览器本地处理</p>
+<div class="dropzone" id="dropzone">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+<div class="text">拖入图片 / 点击选择</div>
+<div class="hint" id="fileNameHint">支持 JPG / PNG / WebP / BMP</div>
+<div class="formats" id="formatSelect"><select id="fmt"><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option></select></div>
+<input type="file" class="file-input" id="fileInput" accept="image/*">
+</div>
+<div class="preview" id="preview"><img id="previewImg" alt="Preview"></div>
+<div class="actions" id="actions"><button class="btn btn-primary" id="convertBtn">转换并下载</button><button class="btn btn-secondary" id="clearBtn">重新选择</button></div>
+</div>
+<footer class="footer"><p>所有处理在浏览器本地完成</p></footer>
+<script>
+const dz=document.getElementById("dropzone"),fi=document.getElementById("fileInput"),pa=document.getElementById("preview"),ac=document.getElementById("actions"),fs=document.getElementById("formatSelect");
+let file=null;
+dz.addEventListener("click",()=>fi.click());fi.addEventListener("change",e=>e.target.files.length&&loadImg(e.target.files[0]));
+dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("dragover")});dz.addEventListener("dragleave",()=>dz.classList.remove("dragover"));
+dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("dragover");e.dataTransfer.files.length&&loadImg(e.dataTransfer.files[0])});
+function loadImg(f){file=f;fs.classList.add("show");document.getElementById("fileNameHint").textContent=f.name;var r=new FileReader();r.onload=e=>{document.getElementById("previewImg").src=e.target.result;pa.classList.add("show");ac.classList.add("show")};r.readAsDataURL(f)}
+document.getElementById("convertBtn").addEventListener("click",()=>{if(!file)return;var img=new Image();img.onload=()=>{URL.revokeObjectURL(img.src);var c=document.createElement("canvas");c.width=img.width;c.height=img.height;c.getContext("2d").drawImage(img,0,0);var mime=document.getElementById("fmt").value;var ext=mime.split("/")[1];if(ext==="jpeg")ext="jpg";c.toBlob(b=>{var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=file.name.replace(/\.[^.]+$/,"."+ext);a.click()},mime)};img.src=URL.createObjectURL(file)})
+document.getElementById("clearBtn").addEventListener("click",()=>{file=null;fs.classList.remove("show");pa.classList.remove("show");ac.classList.remove("show");fi.value=""})
+</script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="免费在线PDF合并工具，无需上传文件，完全在浏览器中处理，保护您的隐私。拖拽多个PDF，一键合并下载。">
+<meta name="keywords" content="PDF合并,在线PDF合并,免费PDF合并,pdf合并工具,合并pdf文件">
+<title>在线PDF合并 - 免费、安全、无需上传</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;min-height:100vh;display:flex;flex-direction:column}
+
+.nav{background:#fff;padding:0 24px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.nav a{display:inline-flex;align-items:center;gap:5px;padding:14px 16px;text-decoration:none;color:#5f6368;font-size:.9rem;border-bottom:3px solid transparent;transition:color .2s,border-color .2s}
+.nav a:hover{color:#1a73e8}
+.nav a.active{color:#1a73e8;border-bottom-color:#1a73e8;font-weight:600}
+.nav .brand{font-weight:700;font-size:1rem;color:#1a1a1a;margin-right:16px;padding:14px 8px}
+.header{background:#fff;padding:16px 24px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;justify-content:space-between}
+.header .logo{font-size:1.25rem;font-weight:700;color:#1a73e8;display:flex;align-items:center;gap:8px}
+.header .logo svg{width:28px;height:28px}
+.container{max-width:800px;margin:0 auto;padding:32px 20px;flex:1}
+h1{font-size:1.6rem;color:#1a1a1a;text-align:center;margin-bottom:6px}
+.sub{text-align:center;color:#5f6368;font-size:.95rem;margin-bottom:28px}
+.sub span{color:#1a73e8;font-weight:600}
+.dropzone{border:2px dashed #d2d6dc;border-radius:8px;padding:48px 24px;text-align:center;background:#fff;transition:border-color .2s,background .2s;cursor:pointer;position:relative}
+.dropzone:hover,.dropzone.dragover{border-color:#1a73e8;background:#f0f7ff}
+.dropzone .icon{margin-bottom:12px;color:#5f6368}
+.dropzone .icon svg{width:48px;height:48px}
+.dropzone .text{font-size:1.1rem;color:#333;margin-bottom:6px}
+.dropzone .hint{font-size:.85rem;color:#80868b}
+.file-list{margin-top:16px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.file-item{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #f0f0f0;gap:12px}
+.file-item:last-child{border-bottom:none}
+.file-item .index{color:#80868b;font-size:.85rem;font-weight:600;min-width:24px}
+.file-item .name{flex:1;font-size:.9rem;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-item .pages{font-size:.8rem;color:#80868b;white-space:nowrap}
+.file-item .remove{border:none;background:none;color:#d93025;cursor:pointer;padding:4px 8px;border-radius:4px;font-size:.85rem}
+.file-item .remove:hover{background:#fce8e6}
+.file-item .move{background:none;border:none;color:#5f6368;cursor:pointer;padding:4px;border-radius:4px;font-size:.85rem}
+.file-item .move:hover{background:#f0f0f0}
+.file-item .move:disabled{color:#ccc;cursor:default}
+.actions{margin-top:20px;display:flex;gap:12px;justify-content:center}
+.btn{padding:12px 32px;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s,transform .1s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:#1a73e8;color:#fff}
+.btn-primary:hover{background:#1557b0}
+.btn-primary:disabled{background:#a8c7fa;cursor:not-allowed}
+.btn-secondary{background:#fff;color:#5f6368;border:1px solid #dadce0}
+.btn-secondary:hover{background:#f0f0f0}
+.btn-secondary:disabled{color:#ccc;cursor:not-allowed}
+.status{text-align:center;margin-top:16px;font-size:.9rem;color:#5f6368;min-height:24px}
+.progress{width:100%;height:4px;background:#e8eaed;border-radius:2px;margin-top:12px;overflow:hidden;display:none}
+.progress .bar{height:100%;background:#1a73e8;border-radius:2px;width:0;transition:width .3s}
+.footer{text-align:center;padding:24px 20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed;margin-top:auto}
+.footer .tip{padding:20px;background:#fff;border-radius:8px;max-width:500px;margin:0 auto 20px;border:1px solid #e8eaed}
+.footer .tip h3{font-size:.95rem;margin-bottom:8px;color:#333}
+.footer .tip p{color:#5f6368;line-height:1.6}
+.footer a{color:#1a73e8;text-decoration:none}
+.hidden{display:none !important}
+.file-input{display:none}
+@media(max-width:600px){
+.container{padding:20px 12px}
+.dropzone{padding:32px 16px}
+h1{font-size:1.35rem}
+.btn{padding:10px 24px;font-size:.9rem}
+}
+</style>
+</head>
+<body>
+
+
+<div class="nav"><a href="/pdf-merge/">&larr; 返回工具集</a></div>
+
+<header class="header">
+<div class="logo">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+PDF合并工具
+</div>
+</header>
+
+<div class="container">
+<h1>在线PDF合并</h1>
+<p class="sub">多个PDF文件合并成一个 &mdash; <span>完全在浏览器处理，无需上传，保护隐私</span></p>
+
+<div class="dropzone" id="dropzone">
+<div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M3 15v3a3 3 0 003 3h12a3 3 0 003-3v-3"/></svg></div>
+<div class="text">拖拽PDF文件到此处</div>
+<div class="hint">支持多个PDF文件，或者点击选择文件</div>
+<input type="file" class="file-input" id="fileInput" multiple accept=".pdf,application/pdf">
+</div>
+
+<div class="file-list hidden" id="fileList"></div>
+
+<div class="actions hidden" id="actions">
+<button class="btn btn-secondary" id="clearBtn">清空</button>
+<button class="btn btn-primary" id="mergeBtn">合并并下载</button>
+</div>
+
+<div class="progress hidden" id="progress"><div class="bar" id="progressBar"></div></div>
+<div class="status" id="status"></div>
+</div>
+
+<footer class="footer">
+<div class="tip">
+<h3>喜欢这个工具？</h3>
+<p>这是一个完全免费的PDF合并工具，所有文件都在您自己的浏览器中处理。<br>如果觉得好用，欢迎分享给朋友</p>
+</div>
+<p>&copy; 2026 PDF合并工具 &mdash; 免费、安全、无广告</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script>
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+const fileList = document.getElementById("fileList");
+const actions = document.getElementById("actions");
+const mergeBtn = document.getElementById("mergeBtn");
+const clearBtn = document.getElementById("clearBtn");
+const progress = document.getElementById("progress");
+const progressBar = document.getElementById("progressBar");
+const status = document.getElementById("status");
+let files = [];
+
+function updateUI() {
+    const hasFiles = files.length > 0;
+    fileList.classList.toggle("hidden", !hasFiles);
+    actions.classList.toggle("hidden", !hasFiles);
+    if (!hasFiles && progress.classList.contains("hidden") === false) {
+        progress.classList.add("hidden");
+    }
+}
+
+function renderFileList() {
+    fileList.innerHTML = files.map((f, i) => `
+    <div class="file-item">
+      <span class="index">${i + 1}</span>
+      <span class="name" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</span>
+      <span class="pages">${(f.size / 1024).toFixed(0)} KB</span>
+      <button class="move" onclick="moveFile(${i}, -1)" title="上移" ${i === 0 ? 'disabled' : ''}>&#9650;</button>
+      <button class="move" onclick="moveFile(${i}, 1)" title="下移" ${i === files.length - 1 ? 'disabled' : ''}>&#9660;</button>
+      <button class="remove" onclick="removeFile(${i})" title="移除">&times;</button>
+    </div>
+  `).join("");
+}
+
+function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function moveFile(idx, dir) {
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= files.length) return;
+    [files[idx], files[newIdx]] = [files[newIdx], files[idx]];
+    renderFileList();
+}
+
+function removeFile(idx) {
+    files.splice(idx, 1);
+    renderFileList();
+    updateUI();
+}
+
+function addFiles(newFiles) {
+    const pdfs = Array.from(newFiles).filter(f => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"));
+    if (pdfs.length === 0) {
+        status.textContent = "请选择PDF文件";
+        return;
+    }
+    files.push(...pdfs);
+    renderFileList();
+    updateUI();
+    status.textContent = files.length > 1 ? "已添加 " + files.length + " 个PDF文件，可以调整顺序后合并" : "请至少添加2个PDF文件";
+}
+
+dropzone.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", (e) => addFiles(e.target.files));
+
+dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("dragover");
+    addFiles(e.dataTransfer.files);
+});
+
+document.addEventListener("paste", (e) => {
+    const items = e.clipboardData.items;
+    if (!items) return;
+    let hasPdf = false;
+    for (const item of items) {
+        if (item.type === "application/pdf" || (item.kind === "file" && item.type === "")) {
+            hasPdf = true;
+        }
+    }
+    if (hasPdf) {
+        e.preventDefault();
+        const pdfItems = [];
+        for (const item of items) {
+            const f = item.getAsFile();
+            if (f && (f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"))) {
+                pdfItems.push(f);
+            }
+        }
+        if (pdfItems.length > 0) addFiles(pdfItems);
+    }
+});
+
+async function mergePDFs() {
+    if (files.length < 1) {
+        status.textContent = "请添加PDF文件";
+        return;
+    }
+    if (files.length === 1) {
+        status.textContent = "至少需要2个PDF文件才能合并";
+        return;
+    }
+
+    mergeBtn.disabled = true;
+    progress.classList.remove("hidden");
+    status.textContent = "正在合并...";
+
+    try {
+        const mergedDoc = await PDFLib.PDFDocument.create();
+        const total = files.length;
+
+        for (let i = 0; i < total; i++) {
+            status.textContent = "正在处理 " + (i + 1) + " / " + total + " ...";
+            progressBar.style.width = (i / total * 100) + "%";
+            const arrayBuffer = await files[i].arrayBuffer();
+            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+            const copiedPages = await mergedDoc.copyPages(pdfDoc, pdfDoc.getPageIndices());
+            copiedPages.forEach(page => mergedDoc.addPage(page));
+        }
+
+        progressBar.style.width = "100%";
+        status.textContent = "合并完成，正在生成文件...";
+
+        const mergedBytes = await mergedDoc.save();
+        const blob = new Blob([mergedBytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+
+        const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+        const downloadName = "merged_" + timestamp + ".pdf";
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = downloadName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        status.textContent = "下载已开始! 共合并 " + total + " 个PDF文件 (" + mergedDoc.getPageCount() + " 页)";
+        progressBar.style.width = "100%";
+    } catch (err) {
+        status.textContent = "合并失败: " + (err.message || "请确认文件是有效的PDF格式");
+        console.error(err);
+    } finally {
+        mergeBtn.disabled = false;
+        setTimeout(() => { progress.classList.add("hidden"); progressBar.style.width = "0"; }, 2000);
+    }
+}
+
+mergeBtn.addEventListener("click", mergePDFs);
+clearBtn.addEventListener("click", () => {
+    files = [];
+    renderFileList();
+    updateUI();
+    status.textContent = "";
+    fileInput.value = "";
+});
+
+updateUI();
+</script>
+</body>
+</html>

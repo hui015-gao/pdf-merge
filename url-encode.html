@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="在线URL编码解码工具，支持encodeURIComponent/decodeURIComponent。">
+<title>URL编解码</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;min-height:100vh;display:flex;flex-direction:column}
+.nav{background:#fff;padding:12px 24px;border-bottom:1px solid #e8eaed}
+.nav a{color:#1a73e8;text-decoration:none;font-size:.9rem}
+.container{max-width:800px;margin:0 auto;padding:24px 20px;flex:1}
+h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
+.sub{text-align:center;color:#5f6368;font-size:.9rem;margin-bottom:20px}
+.tabs{display:flex;justify-content:center;gap:0;margin-bottom:16px}
+.tabs button{padding:8px 24px;border:1px solid #dadce0;background:#fff;font-size:.9rem;cursor:pointer;font-family:inherit;transition:background .15s}
+.tabs button:first-child{border-radius:6px 0 0 6px}
+.tabs button:last-child{border-radius:0 6px 6px 0}
+.tabs button.active{background:#1a73e8;color:#fff;border-color:#1a73e8}
+.io-box{background:#fff;border-radius:8px;padding:16px;margin-bottom:12px}
+.io-box label{font-size:.85rem;color:#5f6368;margin-bottom:6px;display:block}
+.io-box textarea{width:100%;padding:12px;border:1px solid #dadce0;border-radius:6px;font-family:"SF Mono",Monaco,Consolas,monospace;font-size:.85rem;line-height:1.6;min-height:100px;resize:vertical;outline:none}
+.io-box textarea:focus{border-color:#1a73e8}
+.actions{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
+.btn{padding:10px 28px;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-primary{background:#1a73e8;color:#fff}
+.btn-primary:hover{background:#1557b0}
+.btn-accent{background:#0d904f;color:#fff}
+.btn-accent:hover{background:#0a773e}
+.footer{text-align:center;padding:24px 20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed;margin-top:auto}
+</style>
+</head>
+<body>
+<div class="nav"><a href="/pdf-merge/">&larr; 返回工具集</a></div>
+<div class="container">
+<h1>URL 编解码</h1>
+<p class="sub">网址编码 / 解码</p>
+<div class="tabs"><button class="active" onclick="switchTab('encode')">编码 (Encode)</button><button onclick="switchTab('decode')">解码 (Decode)</button></div>
+<div id="encodeSection">
+<div class="io-box"><label>输入文本</label><textarea id="encodeInput" placeholder="输入要编码的文字或网址..."></textarea></div>
+<div class="actions"><button class="btn btn-primary" onclick="doEncode()">编码 &rarr;</button></div>
+<div class="io-box"><label>编码结果</label><textarea id="encodeOutput" readonly placeholder="编码结果..."></textarea></div>
+<div class="actions"><button class="btn btn-accent" onclick="copyText('encodeOutput')">复制</button></div>
+</div>
+<div id="decodeSection" style="display:none">
+<div class="io-box"><label>输入编码文本</label><textarea id="decodeInput" placeholder="输入编码后的URL文本..."></textarea></div>
+<div class="actions"><button class="btn btn-primary" onclick="doDecode()">解码 &rarr;</button></div>
+<div class="io-box"><label>解码结果</label><textarea id="decodeOutput" readonly placeholder="解码结果..."></textarea></div>
+<div class="actions"><button class="btn btn-accent" onclick="copyText('decodeOutput')">复制</button></div>
+</div>
+</div>
+<footer class="footer"><p>所有处理在浏览器本地完成</p></footer>
+<script>
+function switchTab(tab){var enc=document.getElementById("encodeSection"),dec=document.getElementById("decodeSection");var bts=document.querySelectorAll(".tabs button");bts[0].classList.toggle("active",tab==="encode");bts[1].classList.toggle("active",tab==="decode");enc.style.display=tab==="encode"?"block":"none";dec.style.display=tab==="decode"?"block":"none"}
+function doEncode(){try{document.getElementById("encodeOutput").value=encodeURIComponent(document.getElementById("encodeInput").value)}catch(e){document.getElementById("encodeOutput").value="编码失败"}}
+function doDecode(){try{document.getElementById("decodeOutput").value=decodeURIComponent(document.getElementById("decodeInput").value.trim())}catch(e){document.getElementById("decodeOutput").value="解码失败: 请检查输入"}}
+function copyText(id){var el=document.getElementById(id);el.select();navigator.clipboard.writeText(el.value)}
+</script>
+</body>
+</html>

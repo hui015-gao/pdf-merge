@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>视频链接解析 - B站视频信息提取</title>
+<title>视频链接解析</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;min-height:100vh;display:flex;flex-direction:column}
@@ -11,57 +11,88 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
 .sub{text-align:center;color:#5f6368;font-size:.9rem;margin-bottom:20px}
 .tabs{display:flex;justify-content:center;gap:0;margin-bottom:20px}
-.tabs button{padding:8px 24px;border:1px solid #dadce0;background:#fff;font-size:.9rem;cursor:pointer;font-family:inherit;transition:background .15s}
+.tabs button{padding:8px 24px;border:1px solid #dadce0;background:#fff;font-size:.9rem;cursor:pointer;font-family:inherit}
 .tabs button:first-child{border-radius:6px 0 0 6px}
 .tabs button:last-child{border-radius:0 6px 6px 0}
 .tabs button.active{background:#1a73e8;color:#fff;border-color:#1a73e8}
-.search-box{display:flex;gap:8px;margin-bottom:20px}
-.search-box input{flex:1;padding:12px;border:2px solid #e8eaed;border-radius:8px;font-size:.95rem;outline:none;font-family:inherit;transition:border-color .2s}
+.search-box{display:flex;gap:8px;margin-bottom:20px;flex-direction:column}
+.search-box input{width:100%;padding:14px;border:2px solid #e8eaed;border-radius:8px;font-size:.95rem;outline:none;font-family:inherit;transition:border-color .2s}
 .search-box input:focus{border-color:#1a73e8}
-.search-box button{padding:12px 24px;background:#1a73e8;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
-.search-box button:hover{background:#1557b0}
-.search-box button:disabled{background:#a8c7fa;cursor:not-allowed}
-.result-card{display:none;background:#fff;border-radius:8px;overflow:hidden}
+.btn-row{display:flex;gap:8px}
+.btn-row button{flex:1;padding:10px;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-parse{background:#1a73e8;color:#fff}
+.btn-parse:hover{background:#1557b0}
+.btn-open{background:#fb7299;color:#fff}
+.btn-open:hover{background:#e05a7c}
+.result-card{display:none;background:#fff;border-radius:8px;overflow:hidden;margin-bottom:16px}
 .result-card.show{display:block}
-.result-card .cover{width:100%;max-height:300px;object-fit:cover;background:#e8eaed}
-.result-card .info{padding:20px}
-.result-card .title{font-size:1.15rem;font-weight:700;margin-bottom:8px;line-height:1.5}
-.result-card .meta{display:flex;gap:20px;flex-wrap:wrap;font-size:.85rem;color:#5f6368}
-.result-card .meta span{display:flex;align-items:center;gap:4px}
-.result-card .desc{margin-top:12px;font-size:.85rem;color:#80868b;line-height:1.6;max-height:80px;overflow:hidden}
-.result-card .actions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
-.notice{background:#fff3e0;border-radius:8px;padding:16px;margin-top:16px;text-align:center;color:#e65100;font-size:.85rem;line-height:1.6}
-.error{color:#d93025;text-align:center;margin-top:12px;font-size:.9rem}
-.loading{text-align:center;color:#5f6368;margin-top:12px;font-size:.9rem}
-.btn{padding:8px 18px;border:none;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit}
-.btn-accent{background:#0d904f;color:#fff}.btn-accent:hover{background:#0a773e}
+.result-card .cover{width:100%;max-height:240px;object-fit:cover;background:#e8eaed;display:block}
+.result-card .info{padding:16px}
+.result-card .title{font-size:1.05rem;font-weight:700;margin-bottom:8px;line-height:1.5}
+.result-card .meta{font-size:.85rem;color:#5f6368}
+.recommend{background:#f8f9fa;border-radius:8px;padding:20px}
+.recommend h3{font-size:.95rem;margin-bottom:12px;color:#1a1a1a}
+.recommend .tool-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.recommend a{display:block;padding:10px 14px;background:#fff;border:1px solid #e8eaed;border-radius:6px;text-decoration:none;color:#1a73e8;font-size:.85rem;transition:background .15s}
+.recommend a:hover{background:#f0f7ff}
+.recommend .desc{font-size:.78rem;color:#80868b;margin-top:2px}
+.notice{background:#fff3e0;border-radius:8px;padding:16px;margin-bottom:16px;color:#e65100;font-size:.85rem;line-height:1.6}
+.error{color:#d93025;text-align:center;margin-top:8px}
+.loading{text-align:center;color:#5f6368;margin-top:8px}
 .footer{text-align:center;padding:24px 20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed;margin-top:auto}
-@media(max-width:500px){.search-box{flex-direction:column}}
+@media(max-width:500px){.recommend .tool-list{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="nav"><a href="/pdf-merge/">&larr; 返回工具集</a></div>
 <div class="container"><h1>视频链接解析</h1>
-<p class="sub">提取B站视频信息</p>
+<p class="sub">解析视频链接 + 推荐免费下载工具</p>
 <div class="tabs"><button class="active" onclick="switchPlatform('bilibili')">B站</button><button onclick="switchPlatform('douyin')">抖音</button></div>
+
 <div id="biliSection">
-<div class="search-box"><input type="text" id="biliInput" placeholder="粘贴B站视频链接 或 输入BV号..." value="https://www.bilibili.com/video/BV1xx411c7mD"><button id="biliBtn" onclick="fetchBili()">提取</button></div>
+<div class="search-box">
+<input type="text" id="biliInput" placeholder="粘贴B站视频链接 或 输入BV号...">
+<div class="btn-row"><button class="btn-parse" id="biliBtn" onclick="parseBili()">解析链接</button><button class="btn-open" onclick="openBili()">打开视频</button></div></div>
 <div class="loading" id="biliLoading" style="display:none">正在获取视频信息...</div>
 <div class="error" id="biliError"></div>
-<div class="result-card" id="biliResult"><img class="cover" id="biliCover" alt=""><div class="info"><div class="title" id="biliTitle"></div><div class="meta" id="biliMeta"></div><div class="desc" id="biliDesc"></div><div class="actions"><button class="btn btn-accent" id="biliCopyLink" onclick="copyBiliLink()">复制链接</button></div></div></div>
+<div class="result-card" id="biliResult"><img class="cover" id="biliCover" alt="封面"><div class="info"><div class="title" id="biliTitle"></div><div class="meta" id="biliMeta"></div></div></div>
 </div>
+
 <div id="douyinSection" style="display:none">
-<div class="notice">抖音视频提取需要后端服务支持，目前暂不支持纯前端解析。<br>建议使用第三方的在线抖音去水印工具。</div>
+<div class="search-box"><input type="text" id="douyinInput" placeholder="粘贴抖音分享链接..."><button class="btn-parse" onclick="parseDouyin()" style="width:100%;padding:10px;margin-top:4px">解析链接</button></div>
+<div class="notice">抖音视频提取需要后端服务支持，当前只支持链接解析。以下是可用的第三方免费去水印工具。</div>
+</div>
+
+<div class="recommend"><h3>推荐免费视频下载工具</h3>
+<div class="tool-list">
+<a href="https://snapany.com" target="_blank" rel="noopener"><div>SnapAny</div><div class="desc">多平台视频下载</div></a>
+<a href="https://snaptik.app" target="_blank" rel="noopener"><div>SnapTik</div><div class="desc">抖音去水印下载</div></a>
+<a href="https://ssstik.io" target="_blank" rel="noopener"><div>SSSTik</div><div class="desc">TikTok/Douyin下载</div></a>
+<a href="https://www.y2mate.com" target="_blank" rel="noopener"><div>Y2Mate</div><div class="desc">YouTube视频下载</div></a>
+<a href="https://bilibili.iiilab.com" target="_blank" rel="noopener"><div>IIIlab</div><div class="desc">B站视频解析下载</div></a>
+<a href="https://xbeibeix.com" target="_blank" rel="noopener"><div>小北北</div><div class="desc">B站/抖音解析</div></a>
 </div></div>
-<footer class="footer"><p>视频信息来自B站公开API，仅供学习参考</p></footer>
+</div>
+<footer class="footer"><p>站内工具为链接解析，实际下载请使用推荐的第三方工具</p></footer>
 <script>
 var biliData=null;
-function switchPlatform(p){document.querySelectorAll(".tabs button")[0].classList.toggle("active",p==="bilibili");document.querySelectorAll(".tabs button")[1].classList.toggle("active",p==="douyin");document.getElementById("biliSection").style.display=p==="bilibili"?"block":"none";document.getElementById("douyinSection").style.display=p==="douyin"?"block":"none"}
-async function fetchBili(){var inp=document.getElementById("biliInput").value.trim();var bvid="";var m=inp.match(/BV[0-9A-Za-z]{10}/);if(m)bvid=m[0];else{m=inp.match(/bv([0-9A-Za-z]{10})/i);if(m)bvid="BV"+m[1].toUpperCase()}if(!bvid){m=inp.match(/av(\d+)/i);if(m){var aid=parseInt(m[1]);if(aid){bvid="av"+aid}}}if(!bvid){document.getElementById("biliError").textContent="请输入有效的B站链接或BV号";return}
-document.getElementById("biliError").textContent="";document.getElementById("biliLoading").style.display="block";document.getElementById("biliResult").classList.remove("show");document.getElementById("biliBtn").disabled=true;
-try{var url="https://api.allorigins.win/raw?url="+encodeURIComponent("https://api.bilibili.com/x/web-interface/view?bvid="+bvid);var resp=await fetch(url,{headers:{"Referer":"https://www.bilibili.com"}});if(!resp.ok)throw new Error("请求失败");var data=await resp.json();if(data.code!==0)throw new Error(data.message||"获取失败");var v=data.data;biliData=v;document.getElementById("biliTitle").textContent=v.title;document.getElementById("biliMeta").innerHTML="<span>播放 "+formatNum(v.stat.view)+"</span><span>弹幕 "+formatNum(v.stat.danmaku)+"</span><span>时长 "+formatDuration(v.duration)+"</span><span>点赞 "+formatNum(v.stat.like)+"</span>";document.getElementById("biliDesc").textContent=v.desc||"暂无简介";document.getElementById("biliCover").src=v.pic.replace("http:","https:");document.getElementById("biliResult").classList.add("show")}catch(e){document.getElementById("biliError").textContent="获取失败: "+(e.message||"请检查链接或稍后重试");console.error(e)}finally{document.getElementById("biliLoading").style.display="none";document.getElementById("biliBtn").disabled=false}
+function switchPlatform(p){
+document.querySelectorAll(".tabs button")[0].classList.toggle("active",p==="bilibili");
+document.querySelectorAll(".tabs button")[1].classList.toggle("active",p==="douyin");
+document.getElementById("biliSection").style.display=p==="bilibili"?"block":"none";
+document.getElementById("douyinSection").style.display=p==="douyin"?"block":"none"
 }
-function formatNum(n){if(!n)return"0";if(n>=10000)return(n/10000).toFixed(1)+"万";return n.toLocaleString()}
-function formatDuration(s){if(!s)return"00:00";var m=Math.floor(s/60),sec=s%60;return m+":"+sec.toString().padStart(2,"0")}
-function copyBiliLink(){if(biliData) navigator.clipboard.writeText("https://www.bilibili.com/video/"+biliData.bvid)}
+function extractBVID(inp){var m=inp.match(/BV[0-9A-Za-z]{10}/);if(m)return m[0];m=inp.match(/bv([0-9A-Za-z]{10})/i);if(m)return "BV"+m[1].toUpperCase();m=inp.match(/av(\d+)/i);if(m)return "av"+parseInt(m[1]);return null}
+function openBili(){var bvid=extractBVID(document.getElementById("biliInput").value);if(bvid)window.open("https://www.bilibili.com/video/"+bvid,"_blank")}
+async function parseBili(){
+var inp=document.getElementById("biliInput").value.trim(),bvid=extractBVID(inp);
+if(!bvid){document.getElementById("biliError").textContent="请输入有效的B站链接或BV号";return}
+document.getElementById("biliError").textContent="";document.getElementById("biliLoading").style.display="block";document.getElementById("biliBtn").disabled=true;
+try{var resp=await fetch("https://api.bilibili.com/x/web-interface/view?bvid="+bvid,{headers:{Referer:"https://www.bilibili.com"}});var data=await resp.json();
+if(data.code===0){var v=data.data;biliData=v;document.getElementById("biliTitle").textContent=v.title;document.getElementById("biliMeta").textContent="播放 "+(v.stat.view||0).toLocaleString()+" | 弹幕 "+(v.stat.danmaku||0).toLocaleString()+" | "+Math.floor(v.duration/60)+":"+(v.duration%60).toString().padStart(2,"0");var pic=v.pic.replace("http:","https:");document.getElementById("biliCover").src=pic;document.getElementById("biliResult").classList.add("show")}else{document.getElementById("biliError").textContent="获取失败: "+data.message}
+}catch(e){document.getElementById("biliError").textContent="API请求被浏览器阻止(CORS)。已解析BV号: "+bvid;document.getElementById("biliTitle").textContent="BV号: "+bvid;document.getElementById("biliMeta").textContent="点击上方 打开视频 直接跳转B站";document.getElementById("biliResult").classList.add("show")
+document.getElementById("biliCover").src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22480%22 height=%22270%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22480%22 height=%22270%22/%3E%3Ctext x=%22240%22 y=%22140%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2216%22%3E"+encodeURIComponent("封面需配合API获取")+"%3C/text%3E%3C/svg%3E"}
+finally{document.getElementById("biliLoading").style.display="none";document.getElementById("biliBtn").disabled=false}
+}
+function parseDouyin(){var inp=document.getElementById("douyinInput").value.trim();if(!inp)return;var m=inp.match(/https?:\/\/v\.douyin\.com\/\w+/);if(m){document.getElementById("douyinInput").value="已识别抖音链接: 请使用上方推荐的第三方工具下载"}else{document.getElementById("douyinInput").value="未能识别抖音链接格式，请检查"}}
 </script></body></html>

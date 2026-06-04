@@ -121,40 +121,57 @@ function genQR() {
 
 async function doUpload(file) {
   if (!file) return;
-  if (file.size > 50*1024*1024) { document.getElementById("uplStatus").textContent = "文件不能超过50MB"; return; }
-  const st = document.getElementById("uplStatus");
+  if (file.size > 50*1024*1024) { document.getElementById("uplStatus").textContent = "不能超过50MB"; return; }
+  var st = document.getElementById("uplStatus");
   st.textContent = "上传中...";
 
   try {
-    const ts = new Date().toISOString().replace(/[:.]/g,"-");
-    const path = "uploads/" + ts + "_" + file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-    const base64 = await new Promise((res,rej) => {
-      const r = new FileReader(); r.onload = e => res(e.target.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file);
+    var ts = new Date().toISOString().replace(/[:.]/g,"-");
+    var path = "uploads/" + ts + "_" + file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+    var base64 = await new Promise(function(res,rej) {
+      var r = new FileReader(); r.onload = function(e){res(e.target.result.split(",")[1])}; r.onerror = rej; r.readAsDataURL(file);
     });
-    const resp = await fetch("https://gitee.com/api/v5/repos/" + AUTH_CONFIG.giteeOwner + "/" + AUTH_CONFIG.giteeRepo + "/contents/" + path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ access_token: AUTH_CONFIG.giteeToken, content: base64, message: "Upload: " + file.name })
-    });
-    if (!resp.ok) { const er = await resp.json(); throw new Error(er.message || "Upload failed"); }
-    const data = await resp.json();
-    // Use Gitee Pages URL (no referrer check)
-    const url = data.content.html_url;
-    st.innerHTML = "上传成功! <a href=\"" + url + "\" target=\"_blank\" style=\"color:#6366f1\">查看</a>";
 
+    var url, service;
+
+    // Try GitHub first (needs VPN)
+    try {
+      var ghResp = await fetch("https://api.github.com/repos/hui015-gao/pdf-merge/contents/" + path, {
+        method: "PUT",
+        headers: { "Authorization": "token " + AUTH_CONFIG.githubToken, "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "Upload: " + file.name, content: base64, branch: "master" })
+      });
+      if (ghResp.ok) {
+        url = "https://hui015-gao.github.io/pdf-merge/" + path;
+        service = "GitHub";
+      } else { throw new Error("GitHub failed"); }
+    } catch(e) {
+      // Fall back to Gitee
+      st.textContent = "切换备用通道...";
+      var giteeResp = await fetch("https://gitee.com/api/v5/repos/" + AUTH_CONFIG.giteeOwner + "/" + AUTH_CONFIG.giteeRepo + "/contents/" + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: AUTH_CONFIG.giteeToken, content: base64, message: "Upload: " + file.name })
+      });
+      if (!giteeResp.ok) { var er = await giteeResp.json(); throw new Error(er.message || "Upload failed"); }
+      var giteeData = await giteeResp.json();
+      url = "https://hui015-gao.github.io/pdf-merge/dl.html?p=" + encodeURIComponent(path);
+      service = "Gitee";
+    }
+
+    st.innerHTML = "上传成功 (" + service + ") <a href=\"" + url + "\" target=\"_blank\" style=\"color:#6366f1\">查看</a>";
+
+    // Generate QR
     document.getElementById("qrContainer").innerHTML = "";
-    const dlUrl = "https://hui015-gao.github.io/pdf-merge/dl.html?p=" + encodeURIComponent(path);
     qrInstance = new QRCode(document.getElementById("qrContainer"), {
-      text: dlUrl, width: 280, height: 280, correctLevel: QRCode.CorrectLevel.H
+      text: url, width: 280, height: 280, correctLevel: QRCode.CorrectLevel.H
     });
     document.getElementById("infoBox").style.display = "block";
-    document.getElementById("infoBox").innerHTML = "<strong>扫码下载：</strong>" + file.name + " (" + (file.size/1024).toFixed(0) + "KB)";
+    document.getElementById("infoBox").innerHTML = "<strong>扫码下载 (" + service + ")：</strong>" + file.name + " (" + (file.size/1024).toFixed(0) + "KB)";
   } catch(e) {
     st.textContent = "上传失败: " + (e.message || "网络错误");
   }
-}
-
-function downloadPNG() {
+}function downloadPNG() {
   const c = document.getElementById("qrContainer").querySelector("canvas");
   const i = document.getElementById("qrContainer").querySelector("img");
   const src = c ? c.toDataURL("image/png") : (i ? i.src : null);

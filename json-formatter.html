@@ -1,0 +1,159 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="免费在线JSON格式化、压缩和校验工具。支持语法高亮、一键压缩、美化输出。">
+<title>在线JSON格式化 &mdash; 免费JSON美化/压缩/校验</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",monospace;background:#f5f6f8;color:#333;min-height:100vh;display:flex;flex-direction:column}
+.nav{background:#fff;padding:0 24px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.nav a{display:inline-flex;align-items:center;gap:5px;padding:14px 16px;text-decoration:none;color:#5f6368;font-size:.9rem;border-bottom:3px solid transparent;transition:color .2s,border-color .2s}
+.nav a:hover{color:#1a73e8}
+.nav a.active{color:#1a73e8;border-bottom-color:#1a73e8;font-weight:600}
+.nav .brand{font-weight:700;font-size:1rem;color:#1a1a1a;margin-right:16px;padding:14px 8px}
+.container{max-width:960px;margin:0 auto;padding:24px 20px;flex:1}
+h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
+.sub{text-align:center;color:#5f6368;font-size:.9rem;margin-bottom:20px}
+.editor-wrapper{background:#fff;border-radius:8px;display:flex;flex-direction:column;overflow:hidden}
+.editor-wrapper textarea{width:100%;min-height:250px;padding:16px;border:none;font-family:"SF Mono",Monaco,"Cascadia Code",Consolas,monospace;font-size:.85rem;line-height:1.6;resize:vertical;outline:none;background:#1e1e1e;color:#d4d4d4;tab-size:2}
+.editor-wrapper textarea::placeholder{color:#6e6e6e}
+.output-area{display:none;min-height:250px;max-height:500px;padding:16px;font-family:"SF Mono",Monaco,"Cascadia Code",Consolas,monospace;font-size:.85rem;line-height:1.6;overflow:auto;background:#1e1e1e;color:#d4d4d4;white-space:pre-wrap;word-break:break-all}
+.output-area.show{display:block}
+.actions{margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{padding:10px 24px;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;transition:background .2s,transform .1s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:#1a73e8;color:#fff}
+.btn-primary:hover{background:#1557b0}
+.btn-secondary{background:#fff;color:#5f6368;border:1px solid #dadce0}
+.btn-secondary:hover{background:#f0f0f0}
+.btn-accent{background:#0d904f;color:#fff}
+.btn-accent:hover{background:#0a773e}
+.error{color:#f48771;margin-top:8px;font-size:.85rem;text-align:center;min-height:22px}
+.info{color:#5f6368;font-size:.82rem;text-align:center;margin-top:4px}
+.output-actions{display:none;gap:8px;margin-top:12px;justify-content:center}
+.output-actions.show{display:flex}
+.footer{text-align:center;padding:24px 20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed;margin-top:auto}
+.key{color:#569cd6}.str{color:#ce9178}.num{color:#b5cea8}.bool{color:#569cd6}.null{color:#569cd6}
+@media(max-width:600px){
+.container{padding:16px 10px}
+.btn{padding:8px 18px;font-size:.85rem}
+}
+</style>
+</head>
+<body>
+<div class="nav">
+<a href="/pdf-merge/" class="brand">工具集</a>
+<a href="/pdf-merge/">PDF合并</a>
+<a href="/pdf-merge/image-compress.html">图片压缩</a>
+<a href="/pdf-merge/json-formatter.html" class="active">JSON格式化</a>
+<a href="/pdf-merge/qr-generator.html">二维码生成</a>
+</div>
+
+<div class="container">
+<h1>在线JSON格式化</h1>
+<p class="sub">粘贴JSON → 美化/压缩/校验</p>
+
+<div class="editor-wrapper">
+<textarea id="input" placeholder='粘贴JSON到此处... 例: {"name":"test","items":[1,2,3]}' spellcheck="false"></textarea>
+<div class="output-area" id="output"></div>
+</div>
+
+<div class="error" id="error"></div>
+<div class="info" id="info"></div>
+
+<div class="actions">
+<button class="btn btn-primary" id="formatBtn">美化</button>
+<button class="btn btn-secondary" id="compressBtn">压缩</button>
+<button class="btn btn-secondary" id="validateBtn">校验</button>
+<button class="btn btn-secondary" id="clearBtn">清空</button>
+</div>
+<div class="output-actions" id="outputActions">
+<button class="btn btn-accent" id="copyBtn">复制结果</button>
+</div>
+</div>
+
+<footer class="footer"><p>所有处理在浏览器本地完成</p></footer>
+
+<script>
+const input = document.getElementById("input");
+const output = document.getElementById("output");
+const error = document.getElementById("error");
+const info = document.getElementById("info");
+const outputActions = document.getElementById("outputActions");
+let parsedJSON = null;
+
+function highlightJSON(obj) {
+const json = JSON.stringify(obj, null, 2);
+return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+let cls = "num";
+if (/^"/.test(match)) { cls = /:$/.test(match) ? "key" : "str"; }
+else if (/true|false/.test(match)) cls = "bool";
+else if (/null/.test(match)) cls = "null";
+return '<span class="' + cls + '">' + match + '</span>';
+});
+}
+
+function showResult(jsonStr, isError) {
+output.innerHTML = jsonStr; output.classList.add("show"); outputActions.classList.add("show");
+error.textContent = isError || "";
+info.textContent = !isError ? "JSON校验通过 · 有效" : "";
+input.style.display = "none";
+}
+
+document.getElementById("formatBtn").addEventListener("click", () => {
+try {
+parsedJSON = JSON.parse(input.value);
+showResult(highlightJSON(parsedJSON));
+info.textContent = "已美化 · " + JSON.stringify(parsedJSON).length + " 字符";
+} catch(e) {
+error.textContent = "JSON格式错误: " + e.message;
+output.classList.remove("show"); outputActions.classList.remove("show");
+}
+});
+
+document.getElementById("compressBtn").addEventListener("click", () => {
+try {
+parsedJSON = JSON.parse(input.value);
+const compressed = JSON.stringify(parsedJSON);
+showResult(compressed);
+info.textContent = "已压缩 · " + compressed.length + " 字符";
+} catch(e) {
+error.textContent = "JSON格式错误: " + e.message;
+output.classList.remove("show"); outputActions.classList.remove("show");
+}
+});
+
+document.getElementById("validateBtn").addEventListener("click", () => {
+try {
+parsedJSON = JSON.parse(input.value);
+error.textContent = ""; info.textContent = "JSON校验通过! 有效 (顶层: " + (Array.isArray(parsedJSON) ? "数组" : "对象") + ")";
+output.classList.remove("show"); outputActions.classList.remove("show");
+} catch(e) {
+error.textContent = "JSON校验失败: " + e.message;
+}
+});
+
+document.getElementById("clearBtn").addEventListener("click", () => {
+input.value = ""; input.style.display = "";
+output.classList.remove("show"); output.innerHTML = "";
+outputActions.classList.remove("show");
+error.textContent = ""; info.textContent = "";
+parsedJSON = null;
+});
+
+document.getElementById("copyBtn").addEventListener("click", () => {
+navigator.clipboard.writeText(output.textContent).then(() => {
+info.textContent = "已复制到剪贴板!";
+}).catch(() => info.textContent = "复制失败，请手动选择复制");
+});
+
+input.addEventListener("input", () => {
+if (output.classList.contains("show")) {
+document.getElementById("formatBtn").click();
+}
+});
+</script>
+</body>
+</html>

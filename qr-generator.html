@@ -61,7 +61,7 @@ textarea:focus{border-color:#6366f1}
 <div class="dropzone" id="uplDz" onclick="document.getElementById('uplFile').click()">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
 <div style="font-size:.95rem;margin:8px 0 4px">选择文件 或 拖拽</div>
-<div style="font-size:.78rem;color:#94a3b8">图片/PDF/文档 &middot; 最大5MB</div>
+<div style="font-size:.78rem;color:#94a3b8">图片/PDF/文档 &middot; 最大50MB</div>
 <button class="btn btn-primary" style="margin-top:12px;pointer-events:none">选择文件</button>
 </div>
 <input type="file" id="uplFile" class="file-input" onchange="doUpload(this.files[0])">
@@ -121,7 +121,7 @@ function genQR() {
 
 async function doUpload(file) {
   if (!file) return;
-  if (file.size > 5*1024*1024) { document.getElementById("uplStatus").textContent = "文件不能超过5MB"; return; }
+  if (file.size > 50*1024*1024) { document.getElementById("uplStatus").textContent = "文件不能超过50MB"; return; }
   const st = document.getElementById("uplStatus");
   st.textContent = "上传中...";
 

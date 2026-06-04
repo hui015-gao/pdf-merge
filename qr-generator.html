@@ -30,7 +30,8 @@ h1{font-size:1.5rem;text-align:center;margin-bottom:4px}
 <div class="mode-tabs">
 <button class="active" onclick="switchMode('text')">文本</button>
 <button onclick="switchMode('url')">网址链接</button>
-<button onclick="switchMode('file')">图片/视频/文件</button>
+<button onclick="switchMode('file')">分享链接</button>
+<button onclick="switchMode('upload')">上传文件</button>
 </div>
 
 <div class="input-area" id="textMode">
@@ -46,8 +47,16 @@ h1{font-size:1.5rem;text-align:center;margin-bottom:4px}
 <div class="input-area" id="fileMode" style="display:none">
 <textarea id="fileInput" placeholder="粘贴网盘分享链接（百度网盘/阿里云盘/蓝奏云）" oninput="generate()"></textarea>
 <div class="hint">把文件上传到网盘 &rarr; 生成分享链接 &rarr; 粘贴到此处。扫描即可访问。</div>
+<div class="input-area" id="uploadMode" style="display:none">
+<div class="dropzone" id="uploadDz" onclick="document.getElementById('uploadInput').click()" style="padding:40px 24px;cursor:pointer;margin-bottom:0">
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+<div style="font-size:.95rem;margin-bottom:4px">点击选择文件 或 拖拽</div>
+<div style="font-size:.78rem;color:#94a3b8">图片/PDF/文档 &middot; 最大5MB</div>
+<button class="btn btn-primary" style="margin-top:12px;pointer-events:none">选择文件</button>
 </div>
-
+<input type="file" class="file-input" id="uploadInput" onchange="handleUploadFile(this.files[0])">
+<div id="uploadStatus" style="text-align:center;margin-top:12px;font-size:.88rem;color:#64748b"></div>
+</div>
 <div class="preview" id="previewArea"><div id="qrContainer"></div></div>
 
 <div class="info-box" id="wechatInfo" style="display:none"></div>
@@ -68,10 +77,11 @@ let qrInstance = null;
 
 function switchMode(mode) {
   currentMode = mode;
-  document.querySelectorAll(".mode-tabs button").forEach((b, i) => b.classList.toggle("active", i === ["text","url","file"].indexOf(mode)));
+  document.querySelectorAll(".mode-tabs button").forEach((b, i) => b.classList.toggle("active", i === ["text","url","file","upload"].indexOf(mode)));
   document.getElementById("textMode").style.display = mode === "text" ? "block" : "none";
   document.getElementById("urlMode").style.display = mode === "url" ? "block" : "none";
   document.getElementById("fileMode").style.display = mode === "file" ? "block" : "none";
+document.getElementById("uploadMode").style.display = mode === "upload" ? "block" : "none";
   generate();
 }
 
@@ -162,6 +172,40 @@ function downloadSVG() {
   a.click();
 }
 
+async function handleUploadFile(file) {
+  if (!file) return;
+  if (file.size > 5*1024*1024) { document.getElementById("uploadStatus").textContent = "文件不能超过5MB"; return; }
+  const status = document.getElementById("uploadStatus");
+  status.textContent = "上传中...";
+  try {
+    const ts = new Date().toISOString().replace(/[:.]/g,"-");
+    const path = "uploads/" + ts + "_" + file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const resp = await fetch("https://api.github.com/repos/hui015-gao/pdf-merge/contents/" + path, {
+      method: "PUT",
+      headers: { "Authorization": "Bearer " + AUTH_CONFIG.githubToken, "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "Upload via QR tool: " + file.name, content: base64, branch: "master" })
+    });
+    if (!resp.ok) { const err = await resp.json(); throw new Error(err.message || "Upload failed"); }
+    const data = await resp.json();
+    const url = data.content.download_url;
+    status.innerHTML = "上传成功! <a href=\"" + url + "\" target=\"_blank\" style=\"color:#6366f1\">查看文件</a>";
+    // Generate QR for the URL directly
+    document.getElementById("qrContainer").innerHTML = "";
+    qrInstance = new QRCode(document.getElementById("qrContainer"), {
+      text: url, width: 280, height: 280, correctLevel: QRCode.CorrectLevel.H
+    });
+    document.getElementById("wechatInfo").style.display = "block";
+    document.getElementById("wechatInfo").innerHTML = "<strong>扫码下载文件：</strong> " + file.name + " (" + (file.size/1024).toFixed(0) + "KB)";
+  } catch(e) {
+    status.textContent = "上传失败: " + (e.message || "网络错误");
+  }
+}
 generate();
 </script>
 </body></html>

@@ -186,14 +186,14 @@ async function handleUploadFile(file) {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
-    const resp = await fetch("https://api.github.com/repos/hui015-gao/pdf-merge/contents/" + path, {
-      method: "PUT",
-      headers: { "Authorization": "Bearer " + AUTH_CONFIG.githubToken, "Content-Type": "application/json" },
-      body: JSON.stringify({ message: "Upload via QR tool: " + file.name, content: base64, branch: "master" })
+    const resp = await fetch("https://gitee.com/api/v5/repos/" + AUTH_CONFIG.giteeOwner + "/" + AUTH_CONFIG.giteeRepo + "/contents/" + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ access_token: AUTH_CONFIG.giteeToken, content: base64, message: "Upload via QR tool: " + file.name })
     });
     if (!resp.ok) { const err = await resp.json(); throw new Error(err.message || "Upload failed"); }
     const data = await resp.json();
-    const url = data.content.download_url;
+    const url = "https://gitee.com/" + AUTH_CONFIG.giteeOwner + "/" + AUTH_CONFIG.giteeRepo + "/raw/master/" + path;
     status.innerHTML = "上传成功! <a href=\"" + url + "\" target=\"_blank\" style=\"color:#6366f1\">查看文件</a>";
     // Generate QR for the URL directly
     document.getElementById("qrContainer").innerHTML = "";

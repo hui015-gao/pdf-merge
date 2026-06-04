@@ -4,6 +4,11 @@
 // Change these by updating the hashes below
 
 const AUTH_CONFIG = {
+  // Gitee 私有令牌 (国内文件上传用)
+  giteeToken: "3aa54496b3e7704ff6af311585495c6b",
+  giteeOwner: "Admin",
+  giteeRepo: "files",
+
   // Admin master password hash
   adminHash: "9ad17b34f1d1ad383dfde1a6085fd6876248eba20fdad1c5fec8cb8f7d747ec1",
   // Shared user password hash (default: "071528")

@@ -10,109 +10,50 @@ body{background:#f4f5f7}
 .admin-header h1{font-size:1.1rem;font-weight:700}
 .admin-header button{padding:8px 20px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;cursor:pointer;font-size:.85rem;font-family:inherit}
 .admin-header button:hover{background:rgba(255,255,255,.1)}
-.container{max-width:960px;margin:0 auto;padding:32px 20px}
-.stats{display:flex;gap:16px;margin-bottom:32px;flex-wrap:wrap}
-.stat-card{background:#fff;padding:20px 24px;border-radius:12px;flex:1;min-width:140px;border:1px solid #eee}
-.stat-card .num{font-size:1.8rem;font-weight:800;color:#6366f1}
-.stat-card .lbl{font-size:.85rem;color:#888;margin-top:4px}
-.section-card{background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;border:1px solid #eee}
-.section-card h3{font-size:1rem;margin-bottom:16px}
-.add-form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.add-form input{padding:10px 14px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;flex:1;min-width:150px;font-family:inherit}
-.add-form input:focus{border-color:#6366f1;outline:none}
-table{width:100%;border-collapse:collapse;font-size:.88rem}
-th{text-align:left;padding:10px 12px;background:#f8f9fb;font-weight:600;color:#555;font-size:.8rem}
-td{padding:12px;border-bottom:1px solid #f0f0f0}
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
-.badge-admin{background:#eef2ff;color:#6366f1}.badge-user{background:#f0fdf4;color:#10b981}.badge-disabled{background:#fef2f2;color:#ef4444}
-.actions button{padding:5px 12px;border:1px solid #e5e7eb;background:#fff;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:inherit;margin-right:4px}
-.actions button:hover{background:#f8f9fb}.actions button.danger{color:#ef4444}.actions button.danger:hover{background:#fef2f2}
-.btn{padding:10px 24px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit}
-.btn:hover{background:#4f46e5}
-.error-msg{color:#ef4444;text-align:center;margin-top:8px;font-size:.88rem}.msg{text-align:center;color:#888;padding:20px}
+.container{max-width:680px;margin:0 auto;padding:32px 20px}
+.card{background:#fff;border-radius:12px;padding:28px;margin-bottom:20px;border:1px solid #eee}
+.card h3{font-size:1rem;margin-bottom:16px}
+.form-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.form-row input{padding:10px 14px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;flex:1;min-width:180px;font-family:inherit}
+.form-row input:focus{border-color:#6366f1;outline:none}
+.btn{padding:10px 24px;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-primary{background:#6366f1;color:#fff}.btn-primary:hover{background:#4f46e5}
+.btn-success{background:#10b981;color:#fff}.btn-success:hover{background:#059669}
+.code-block{background:#1e1e1e;color:#d4d4d4;padding:16px;border-radius:8px;font-family:SF Mono,Monaco,monospace;font-size:.82rem;line-height:1.6;overflow-x:auto;margin-top:12px;white-space:pre-wrap;word-break:break-all}
+.info{color:#888;font-size:.85rem;margin-top:8px;line-height:1.6}
+.success{color:#10b981;font-size:.88rem;margin-top:8px;font-weight:600}.error-msg{color:#ef4444;font-size:.88rem;margin-top:8px}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap}
+.stat{background:#f8f9fb;padding:16px 24px;border-radius:10px;text-align:center;min-width:100px}
+.stat .n{font-size:1.5rem;font-weight:800;color:#6366f1}.stat .l{font-size:.8rem;color:#888}
 </style>
 </head>
 <body>
-<div class="admin-header"><h1>管理员面板</h1><div style="display:flex;gap:12px;align-items:center"><span id="adminEmail" style="font-size:.85rem;opacity:.7"></span><button onclick="logout()">退出</button></div></div>
-<div class="container" id="main"><div class="msg">验证权限中...</div></div>
-
-<script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.2/dist/av-min.js"></script>
-<script src="leancloud-config.js"></script>
+<div class="admin-header"><h1>管理员面板</h1><div><button onclick="logout()">退出</button></div></div>
+<div class="container" id="main"></div>
+<script src="auth-config.js"></script>
 <script>
+if (sessionStorage.getItem("role") !== "admin") { window.location.href = "login.html?admin=1&redirect=admin.html"; }
+
 async function init() {
-  const user = AV.User.current();
-  if (!user) { window.location.href = "login.html?redirect=admin.html"; return; }
-  const role = user.get("role");
-  if (role !== "admin") { alert("无管理员权限"); window.location.href = "index.html"; return; }
-  document.getElementById("adminEmail").textContent = user.get("email") || user.get("username");
-  renderDashboard();
-}
+  let h = '<div class="stat-row"><div class="stat" style="flex:1"><div class="n">1</div><div class="l">共享密码</div></div><div class="stat" style="flex:1"><div class="n">' + AUTH_CONFIG.sharedPassword.length + '</div><div class="l">密码位数</div></div></div>';
 
-async function loadUsers() {
-  const q = new AV.Query("_User");
-  q.descending("createdAt"); q.limit(100);
-  return await q.find();
-}
+  h += '<div class="card"><h3>修改用户共享密码</h3><div class="form-row"><input type="text" id="newPwd" placeholder="新密码（6位以上）"><button class="btn btn-primary" onclick="updatePassword()">生成新配置</button></div><div id="result"></div></div>';
 
-async function renderDashboard() {
-  const users = await loadUsers();
-  const active = users.filter(u => (u.get("status")||"active")==="active").length;
-  const admins = users.filter(u => u.get("role")==="admin").length;
-  const disabled = users.filter(u => u.get("status")==="disabled").length;
+  h += '<div class="card"><h3>当前配置</h3><div class="code-block" id="currentConfig"></div><div class="info">这是 auth-config.js 文件的内容。如果需要更新生效，复制上方代码替换 auth-config.js，推送到 GitHub。</div></div>';
 
-  let h = `<div class="stats"><div class="stat-card"><div class="num">${users.length}</div><div class="lbl">总用户</div></div><div class="stat-card"><div class="num">${active}</div><div class="lbl">活跃</div></div><div class="stat-card"><div class="num">${admins}</div><div class="lbl">管理员</div></div><div class="stat-card"><div class="num">${disabled}</div><div class="lbl">已禁用</div></div></div>`;
-
-  h += `<div class="section-card"><h3>添加用户</h3><div class="add-form"><input type="email" id="newEmail" placeholder="用户邮箱"><input type="password" id="newPwd" placeholder="密码(6位以上)"><button class="btn" onclick="addUser()">添加用户</button></div><div class="error-msg" id="addError"></div></div>`;
-
-  h += `<div class="section-card"><h3>用户列表</h3><table><thead><tr><th>邮箱</th><th>角色</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
-  users.forEach(u => {
-    const email = u.get("email") || u.get("username");
-    const role = u.get("role") || "user";
-    const status = u.get("status") || "active";
-    const rb = role==="admin"?"<span class=badge badge-admin>管理员</span>":"<span class=badge badge-user>用户</span>";
-    const sb = status==="active"?"<span class=badge badge-user>活跃</span>":"<span class=badge badge-disabled>已禁用</span>";
-    h += `<tr><td>${email}</td><td>${rb}</td><td>${sb}</td><td class=actions><button onclick="toggleUser('${u.id}','${status}')">${status==="active"?"禁用":"启用"}</button>${role!=="admin"?`<button class=danger onclick="deleteUser('${u.id}')">删除</button>`:""}</td></tr>`;
-  });
-  h += `</tbody></table></div>`;
   document.getElementById("main").innerHTML = h;
+  document.getElementById("currentConfig").textContent = JSON.stringify({ adminHash: AUTH_CONFIG.adminHash, userHash: AUTH_CONFIG.userHash, sharedPassword: AUTH_CONFIG.sharedPassword }, null, 2);
 }
 
-async function addUser() {
-  const email = document.getElementById("newEmail").value.trim();
-  const pwd = document.getElementById("newPwd").value;
-  if (!email || !pwd || pwd.length < 6) { document.getElementById("addError").textContent = "请填写有效邮箱和6位以上密码"; return; }
-  try {
-    const user = new AV.User();
-    user.set("username", email);
-    user.set("email", email);
-    user.set("password", pwd);
-    user.set("role", "user");
-    user.set("status", "active");
-    await user.signUp();
-    document.getElementById("addError").textContent = "";
-    renderDashboard();
-  } catch (e) {
-    document.getElementById("addError").textContent = "添加失败: " + (e.code === 202 ? "邮箱已被注册" : e.message || e.error);
-  }
+async function updatePassword() {
+  const pwd = document.getElementById("newPwd").value.trim();
+  if (!pwd || pwd.length < 6) { document.getElementById("result").innerHTML = '<div class="error-msg">密码至少6位</div>'; return; }
+  const hash = await sha256(pwd);
+  const config = JSON.stringify({ adminHash: AUTH_CONFIG.adminHash, userHash: hash, sharedPassword: pwd }, null, 2);
+  document.getElementById("result").innerHTML = '<div class="success">新密码哈希已生成</div><div class="code-block" style="margin-top:8px">' + config.replace(/</g, "&lt;") + '</div><div class="info">复制上面的代码，替换 auth-config.js，推送到 GitHub 即生效。</div>';
 }
 
-async function toggleUser(uid, curStatus) {
-  const q = new AV.Query("_User");
-  const user = await q.get(uid);
-  user.set("status", curStatus === "active" ? "disabled" : "active");
-  await user.save();
-  renderDashboard();
-}
-
-async function deleteUser(uid) {
-  if (!confirm("确定删除此用户?")) return;
-  const q = new AV.Query("_User");
-  const user = await q.get(uid);
-  await user.destroy();
-  renderDashboard();
-}
-
-function logout() { AV.User.logOut(); window.location.href = "login.html"; }
+function logout() { sessionStorage.clear(); window.location.href = "login.html"; }
 init();
 </script>
 </body></html>

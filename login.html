@@ -2,61 +2,80 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>登录</title>
+<title>登录 - 在线工具集</title>
 <link rel="stylesheet" href="style.css">
 <style>
 .login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#1e1b4b,#4338ca,#6366f1);padding:20px}
 .login-card{background:#fff;border-radius:16px;padding:40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .login-card h2{font-size:1.5rem;text-align:center;margin-bottom:8px}
-.login-card .sub{text-align:center;color:#888;font-size:.88rem;margin-bottom:28px}
+.login-card .sub{text-align:center;color:#888;font-size:.88rem;margin-bottom:24px}
+.role-tabs{display:flex;gap:0;margin-bottom:20px}
+.role-tabs button{flex:1;padding:10px;border:2px solid #e5e7eb;background:#fff;font-size:.88rem;cursor:pointer;font-family:inherit;transition:all .15s}
+.role-tabs button:first-child{border-radius:8px 0 0 8px}
+.role-tabs button:last-child{border-radius:0 8px 8px 0}
+.role-tabs button.active{background:#6366f1;color:#fff;border-color:#6366f1}
 .form-group{margin-bottom:16px}
 .form-group label{display:block;font-size:.85rem;font-weight:600;margin-bottom:6px;color:#555}
-.form-group input{width:100%;padding:14px;border:2px solid #e5e7eb;border-radius:10px;font-size:.95rem;font-family:inherit;transition:border-color .2s}
+.form-group input{width:100%;padding:14px;border:2px solid #e5e7eb;border-radius:10px;font-size:.95rem;font-family:inherit}
 .form-group input:focus{border-color:#6366f1;outline:none}
 .btn-login{width:100%;padding:14px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s}
 .btn-login:hover{background:#4f46e5;transform:translateY(-1px)}
 .btn-login:disabled{opacity:.5}
 .error{color:#ef4444;text-align:center;font-size:.85rem;margin-top:12px;min-height:20px}
-.footer-link{text-align:center;margin-top:20px;font-size:.85rem;color:#888}
-.footer-link a{color:#6366f1}
 </style>
 </head>
 <body>
 <div class="login-page">
 <div class="login-card">
-<h2>登录</h2>
-<p class="sub">输入授权账号访问工具集</p>
-<div class="form-group"><label>邮箱</label><input type="email" id="email" placeholder="your@email.com"></div>
-<div class="form-group"><label>密码</label><input type="password" id="password" placeholder="输入密码"></div>
+<h2>登录验证</h2>
+<p class="sub">输入访问密码</p>
+<div class="role-tabs"><button class="active" onclick="setRole('user')">用户</button><button onclick="setRole('admin')">管理员</button></div>
+<div class="form-group"><label id="pwLabel">用户密码</label><input type="password" id="password" placeholder="输入密码"></div>
 <button class="btn-login" id="loginBtn" onclick="handleLogin()">登 录</button>
 <div class="error" id="error"></div>
-<div class="footer-link"><a href="admin.html">管理员入口</a></div>
 </div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.2/dist/av-min.js"></script>
-<script src="leancloud-config.js"></script>
+<script src="auth-config.js"></script>
 <script>
 const params = new URLSearchParams(window.location.search);
 const redirect = params.get("redirect") || "index.html";
-if (params.get("error") === "disabled") document.getElementById("error").textContent = "该账号已被禁用";
+let currentRole = params.get("admin") === "1" ? "admin" : "user";
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (params.get("admin") === "1") {
+    currentRole = "admin";
+    document.querySelectorAll(".role-tabs button")[0].classList.remove("active");
+    document.querySelectorAll(".role-tabs button")[1].classList.add("active");
+    document.getElementById("pwLabel").textContent = "管理员密码";
+  }
+});
+
+function setRole(role) {
+  currentRole = role;
+  document.getElementById("pwLabel").textContent = role === "admin" ? "管理员密码" : "用户密码";
+  document.querySelectorAll(".role-tabs button")[0].classList.toggle("active", role === "user");
+  document.querySelectorAll(".role-tabs button")[1].classList.toggle("active", role === "admin");
+}
 
 async function handleLogin() {
-  const email = document.getElementById("email").value.trim();
   const pwd = document.getElementById("password").value;
-  if (!email || !pwd) { document.getElementById("error").textContent = "请填写邮箱和密码"; return; }
+  if (!pwd) { document.getElementById("error").textContent = "请输入密码"; return; }
   const btn = document.getElementById("loginBtn");
-  btn.disabled = true; btn.innerHTML = "登录中...";
-  try {
-    const user = await AV.User.logIn(email, pwd);
-    const status = user.get("status") || "active";
-    if (status !== "active") { await AV.User.logOut(); document.getElementById("error").textContent = "账号已被禁用"; btn.disabled = false; btn.innerHTML = "登 录"; return; }
+  btn.disabled = true; btn.innerHTML = "验证中...";
+
+  const inputHash = await sha256(pwd);
+  const expectedHash = currentRole === "admin" ? AUTH_CONFIG.adminHash : AUTH_CONFIG.userHash;
+
+  if (inputHash === expectedHash) {
+    sessionStorage.setItem("authed", "true");
+    sessionStorage.setItem("role", currentRole);
     window.location.href = redirect;
-  } catch (e) {
-    const msg = e.code === 211 ? "账号不存在" : e.code === 210 ? "密码错误" : e.message || e.error;
-    document.getElementById("error").textContent = "登录失败: " + msg;
+  } else {
+    document.getElementById("error").textContent = "密码错误";
     btn.disabled = false; btn.innerHTML = "登 录";
   }
 }
+
 document.getElementById("password").addEventListener("keydown", (e) => { if (e.key === "Enter") handleLogin(); });
 </script>
 </body></html>

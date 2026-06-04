@@ -139,7 +139,7 @@ async function doUpload(file) {
     if (!resp.ok) { const er = await resp.json(); throw new Error(er.message || "Upload failed"); }
     const data = await resp.json();
     // Use Gitee Pages URL (no referrer check)
-    const url = data.content.download_url;
+    const url = data.content.html_url;
     st.innerHTML = "上传成功! <a href=\"" + url + "\" target=\"_blank\" style=\"color:#6366f1\">查看</a>";
 
     document.getElementById("qrContainer").innerHTML = "";

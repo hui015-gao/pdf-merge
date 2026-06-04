@@ -22,8 +22,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,Microsoft YaHei,sans-serif;bac
 <div class="url-line" id="urlInfo" style="display:none"></div>
 </div>
 <script>
-const params = new URLSearchParams(window.location.search);
-const text = params.get("t") || "";
+// Read from hash (#) or query parameter (?t=)
+let text = decodeURIComponent((window.location.hash || "").replace(/^#/, ""));
+if (!text) {
+  const params = new URLSearchParams(window.location.search);
+  text = params.get("t") || "";
+}
 
 if (text) {
   try {

@@ -6,115 +6,113 @@
 <link rel="stylesheet" href="style.css">
 <style>
 body{background:#f4f5f7}
-.admin-header{background:#1d1d1f;color:#fff;padding:16px 32px;display:flex;justify-content:space-between;align-items:center}
+.admin-header{background:#1d1d1f;color:#fff;padding:14px 32px;display:flex;justify-content:space-between;align-items:center}
 .admin-header h1{font-size:1.1rem;font-weight:700}
 .admin-header button{padding:8px 20px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;cursor:pointer;font-size:.85rem;font-family:inherit}
 .admin-header button:hover{background:rgba(255,255,255,.1)}
 .container{max-width:960px;margin:0 auto;padding:32px 20px}
 .stats{display:flex;gap:16px;margin-bottom:32px;flex-wrap:wrap}
-.stat-card{background:#fff;padding:20px 24px;border-radius:12px;flex:1;min-width:150px;border:1px solid #eee}
+.stat-card{background:#fff;padding:20px 24px;border-radius:12px;flex:1;min-width:140px;border:1px solid #eee}
 .stat-card .num{font-size:1.8rem;font-weight:800;color:#6366f1}
 .stat-card .lbl{font-size:.85rem;color:#888;margin-top:4px}
 .section-card{background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;border:1px solid #eee}
-.section-card h3{font-size:1rem;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.add-form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.section-card h3{font-size:1rem;margin-bottom:16px}
+.add-form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 .add-form input{padding:10px 14px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;flex:1;min-width:150px;font-family:inherit}
 .add-form input:focus{border-color:#6366f1;outline:none}
-.user-table{width:100%;border-collapse:collapse;font-size:.88rem}
-.user-table th{text-align:left;padding:10px 12px;background:#f8f9fb;font-weight:600;color:#555;font-size:.8rem;text-transform:uppercase;letter-spacing:.5px}
-.user-table td{padding:12px;border-bottom:1px solid #f0f0f0}
-.user-table .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
-.badge-admin{background:#eef2ff;color:#6366f1}
-.badge-user{background:#f0fdf4;color:#10b981}
-.badge-disabled{background:#fef2f2;color:#ef4444}
-.actions{display:flex;gap:6px}
-.actions button{padding:5px 12px;border:1px solid #e5e7eb;background:#fff;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:inherit;transition:all .15s}
-.actions button:hover{background:#f8f9fb}
-.actions button.danger{color:#ef4444}.actions button.danger:hover{background:#fef2f2}
-.msg{text-align:center;color:#888;padding:20px}.error-msg{color:#ef4444;text-align:center;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{text-align:left;padding:10px 12px;background:#f8f9fb;font-weight:600;color:#555;font-size:.8rem}
+td{padding:12px;border-bottom:1px solid #f0f0f0}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+.badge-admin{background:#eef2ff;color:#6366f1}.badge-user{background:#f0fdf4;color:#10b981}.badge-disabled{background:#fef2f2;color:#ef4444}
+.actions button{padding:5px 12px;border:1px solid #e5e7eb;background:#fff;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:inherit;margin-right:4px}
+.actions button:hover{background:#f8f9fb}.actions button.danger{color:#ef4444}.actions button.danger:hover{background:#fef2f2}
+.btn{padding:10px 24px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit}
+.btn:hover{background:#4f46e5}
+.error-msg{color:#ef4444;text-align:center;margin-top:8px;font-size:.88rem}.msg{text-align:center;color:#888;padding:20px}
 </style>
 </head>
 <body>
 <div class="admin-header"><h1>管理员面板</h1><div style="display:flex;gap:12px;align-items:center"><span id="adminEmail" style="font-size:.85rem;opacity:.7"></span><button onclick="logout()">退出</button></div></div>
-<div class="container" id="main">
-<div class="msg">加载中...</div>
-</div>
+<div class="container" id="main"><div class="msg">验证权限中...</div></div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.2/dist/av-min.js"></script>
+<script src="leancloud-config.js"></script>
 <script>
-auth.onAuthStateChanged(async (user) => {
+async function init() {
+  const user = AV.User.current();
   if (!user) { window.location.href = "login.html?redirect=admin.html"; return; }
-  try {
-    const doc = await db.collection("users").doc(user.uid).get();
-    if (!doc.exists || doc.data().role !== "admin") { alert("无管理员权限"); window.location.href = "index.html"; return; }
-    document.getElementById("adminEmail").textContent = user.email;
-    renderDashboard();
-  } catch(e) { document.getElementById("main").innerHTML = '<div class="error-msg">加载失败: ' + e.message + '</div>'; }
-});
+  const role = user.get("role");
+  if (role !== "admin") { alert("无管理员权限"); window.location.href = "index.html"; return; }
+  document.getElementById("adminEmail").textContent = user.get("email") || user.get("username");
+  renderDashboard();
+}
 
 async function loadUsers() {
-  const snap = await db.collection("users").get();
-  const users = []; snap.forEach(d => users.push({ id: d.id, ...d.data() }));
-  return users.sort((a,b) => a.createdAt?.toDate?.() - b.createdAt?.toDate?.() || 0);
+  const q = new AV.Query("_User");
+  q.descending("createdAt"); q.limit(100);
+  return await q.find();
 }
 
 async function renderDashboard() {
   const users = await loadUsers();
-  const active = users.filter(u => u.status === "active").length;
-  const admins = users.filter(u => u.role === "admin").length;
-  const disabled = users.filter(u => u.status === "disabled").length;
+  const active = users.filter(u => (u.get("status")||"active")==="active").length;
+  const admins = users.filter(u => u.get("role")==="admin").length;
+  const disabled = users.filter(u => u.get("status")==="disabled").length;
 
-  let html = `<div class="stats"><div class="stat-card"><div class="num">${users.length}</div><div class="lbl">总用户</div></div><div class="stat-card"><div class="num">${active}</div><div class="lbl">活跃用户</div></div><div class="stat-card"><div class="num">${admins}</div><div class="lbl">管理员</div></div><div class="stat-card"><div class="num">${disabled}</div><div class="lbl">已禁用</div></div></div>`;
+  let h = `<div class="stats"><div class="stat-card"><div class="num">${users.length}</div><div class="lbl">总用户</div></div><div class="stat-card"><div class="num">${active}</div><div class="lbl">活跃</div></div><div class="stat-card"><div class="num">${admins}</div><div class="lbl">管理员</div></div><div class="stat-card"><div class="num">${disabled}</div><div class="lbl">已禁用</div></div></div>`;
 
-  // Add user form
-  html += `<div class="section-card"><h3>添加用户</h3><div class="add-form"><input type="email" id="newEmail" placeholder="用户邮箱"><input type="password" id="newPwd" placeholder="密码(6位以上)"><button class="btn btn-primary" onclick="addUser()" style="width:auto;padding:10px 24px">添加用户</button></div><div class="error-msg" id="addError"></div></div>`;
+  h += `<div class="section-card"><h3>添加用户</h3><div class="add-form"><input type="email" id="newEmail" placeholder="用户邮箱"><input type="password" id="newPwd" placeholder="密码(6位以上)"><button class="btn" onclick="addUser()">添加用户</button></div><div class="error-msg" id="addError"></div></div>`;
 
-  // User list
-  html += `<div class="section-card"><h3>用户列表</h3><table class="user-table"><thead><tr><th>邮箱</th><th>角色</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>`;
+  h += `<div class="section-card"><h3>用户列表</h3><table><thead><tr><th>邮箱</th><th>角色</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
   users.forEach(u => {
-    const statusBadge = u.status === "active" ? `<span class="badge badge-user">活跃</span>` : `<span class="badge badge-disabled">已禁用</span>`;
-    const roleBadge = u.role === "admin" ? `<span class="badge badge-admin">管理员</span>` : `<span class="badge badge-user">用户</span>`;
-    const created = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString("zh-CN") : "?";
-    html += `<tr><td>${u.email}</td><td>${roleBadge}</td><td>${statusBadge}</td><td>${created}</td><td class="actions">
-      <button onclick="toggleUser('${u.id}','${u.status}')">${u.status==="active"?"禁用":"启用"}</button>
-      ${u.role!=="admin"?`<button class="danger" onclick="deleteUser('${u.id}')">删除</button>`:""}
-    </td></tr>`;
+    const email = u.get("email") || u.get("username");
+    const role = u.get("role") || "user";
+    const status = u.get("status") || "active";
+    const rb = role==="admin"?"<span class=badge badge-admin>管理员</span>":"<span class=badge badge-user>用户</span>";
+    const sb = status==="active"?"<span class=badge badge-user>活跃</span>":"<span class=badge badge-disabled>已禁用</span>";
+    h += `<tr><td>${email}</td><td>${rb}</td><td>${sb}</td><td class=actions><button onclick="toggleUser('${u.id}','${status}')">${status==="active"?"禁用":"启用"}</button>${role!=="admin"?`<button class=danger onclick="deleteUser('${u.id}')">删除</button>`:""}</td></tr>`;
   });
-  html += `</tbody></table></div>`;
-  document.getElementById("main").innerHTML = html;
+  h += `</tbody></table></div>`;
+  document.getElementById("main").innerHTML = h;
 }
 
 async function addUser() {
   const email = document.getElementById("newEmail").value.trim();
   const pwd = document.getElementById("newPwd").value;
-  if (!email || !pwd || pwd.length < 6) { document.getElementById("addError").textContent = "请输入有效邮箱和6位以上密码"; return; }
+  if (!email || !pwd || pwd.length < 6) { document.getElementById("addError").textContent = "请填写有效邮箱和6位以上密码"; return; }
   try {
-    const cred = await auth.createUserWithEmailAndPassword(email, pwd);
-    await db.collection("users").doc(cred.user.uid).set({ email, role: "user", status: "active", createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-    await auth.signOut();
-    // Re-login as admin - we can't easily re-login here, so just continue
+    const user = new AV.User();
+    user.set("username", email);
+    user.set("email", email);
+    user.set("password", pwd);
+    user.set("role", "user");
+    user.set("status", "active");
+    await user.signUp();
     document.getElementById("addError").textContent = "";
     renderDashboard();
-  } catch(e) {
-    document.getElementById("addError").textContent = "添加失败: " + (e.code === "auth/email-already-in-use" ? "邮箱已存在" : e.message);
+  } catch (e) {
+    document.getElementById("addError").textContent = "添加失败: " + (e.code === 202 ? "邮箱已被注册" : e.message || e.error);
   }
 }
 
-async function toggleUser(uid, currentStatus) {
-  const newStatus = currentStatus === "active" ? "disabled" : "active";
-  await db.collection("users").doc(uid).update({ status: newStatus });
+async function toggleUser(uid, curStatus) {
+  const q = new AV.Query("_User");
+  const user = await q.get(uid);
+  user.set("status", curStatus === "active" ? "disabled" : "active");
+  await user.save();
   renderDashboard();
 }
 
 async function deleteUser(uid) {
   if (!confirm("确定删除此用户?")) return;
-  await db.collection("users").doc(uid).delete();
+  const q = new AV.Query("_User");
+  const user = await q.get(uid);
+  await user.destroy();
   renderDashboard();
 }
 
-function logout() { auth.signOut(); window.location.href = "login.html"; }
+function logout() { AV.User.logOut(); window.location.href = "login.html"; }
+init();
 </script>
 </body></html>

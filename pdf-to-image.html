@@ -16,7 +16,6 @@ h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
 .dropzone{border:2px dashed #d2d6dc;border-radius:8px;padding:36px;text-align:center;background:#fff;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:16px}
 .dropzone:hover,.dropzone.dragover{border-color:#1a73e8;background:#f0f7ff}
 .dropzone svg{width:36px;height:36px;color:#5f6368;margin-bottom:6px}
-.dropzone .text{font-size:.95rem;color:#333}
 .file-info{display:none;text-align:center;background:#fff;border-radius:8px;padding:16px;margin-bottom:16px}
 .file-info.show{display:block}
 .file-info .pages{color:#1a73e8;font-size:1.1rem;font-weight:700}
@@ -25,8 +24,8 @@ h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
 .btn{padding:10px 28px;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
 .btn-primary{background:#1a73e8;color:#fff}
 .btn-primary:hover{background:#1557b0}
+.btn-primary:disabled{background:#a8c7fa;cursor:not-allowed}
 .btn-secondary{background:#fff;color:#5f6368;border:1px solid #dadce0}
-.btn-secondary:hover{background:#f0f0f0}
 .status{text-align:center;color:#5f6368;font-size:.9rem;min-height:24px}
 .file-input{display:none}
 .footer{text-align:center;padding:24px 20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed;margin-top:auto}
@@ -50,18 +49,66 @@ h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
 <div class="status" id="status"></div>
 </div>
 <footer class="footer"><p>所有处理在浏览器本地完成</p></footer>
-<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
-let pdfDoc=null;
-const dz=document.getElementById("dropzone"),fi=document.getElementById("fileInput"),fileInfo=document.getElementById("fileInfo"),ac=document.getElementById("actions"),st=document.getElementById("status");
-dz.addEventListener("click",()=>fi.click());fi.addEventListener("change",e=>e.target.files.length&&loadPDF(e.target.files[0]));
-dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("dragover")});dz.addEventListener("dragleave",()=>dz.classList.remove("dragover"));
-dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("dragover");e.dataTransfer.files.length&&loadPDF(e.dataTransfer.files[0])});
-async function loadPDF(file){var ab=await file.arrayBuffer();pdfDoc=await PDFLib.PDFDocument.load(ab);document.getElementById("fileName").textContent=file.name+"  |  ";document.getElementById("pageCount").textContent="共 "+pdfDoc.getPageCount()+" 页";fileInfo.classList.add("show");ac.classList.add("show");st.textContent=""}
-async function convertAll(){if(!pdfDoc)return;var total=pdfDoc.getPageCount();st.textContent="正在转换 "+total+" 页...";try{for(var i=0;i<total;i++){var bytes=await pdfDoc.save();downloadBlob(bytes,"page_"+(i+1)+".pdf");st.textContent="已下载 "+(i+1)+"/"+total+" 页"}}catch(e){st.textContent="转换失败"}}
-document.getElementById("convertBtn").addEventListener("click",convertAll);
-document.getElementById("clearBtn").addEventListener("click",()=>{pdfDoc=null;fileInfo.classList.remove("show");ac.classList.remove("show");fi.value="";st.textContent=""})
-function downloadBlob(b,n){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([b]));a.download=n;a.click()}
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+var pdfDoc = null, fileBytes = null;
+var dz = document.getElementById("dropzone"), fi = document.getElementById("fileInput");
+var fileInfo = document.getElementById("fileInfo"), ac = document.getElementById("actions"), st = document.getElementById("status");
+
+dz.addEventListener("click", function(){fi.click()});
+fi.addEventListener("change", function(e){e.target.files.length && loadPDF(e.target.files[0])});
+dz.addEventListener("dragover", function(e){e.preventDefault();dz.classList.add("dragover")});
+dz.addEventListener("dragleave", function(){dz.classList.remove("dragover")});
+dz.addEventListener("drop", function(e){e.preventDefault();dz.classList.remove("dragover");e.dataTransfer.files.length && loadPDF(e.dataTransfer.files[0])});
+
+async function loadPDF(file) {
+    var reader = new FileReader();
+    reader.onload = async function(e) {
+        fileBytes = new Uint8Array(e.target.result);
+        pdfDoc = await pdfjsLib.getDocument({data: fileBytes}).promise;
+        document.getElementById("fileName").textContent = file.name + " | ";
+        document.getElementById("pageCount").textContent = "共 " + pdfDoc.numPages + " 页";
+        fileInfo.classList.add("show"); ac.classList.add("show"); st.textContent = "";
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+async function convertAll() {
+    if (!pdfDoc) return;
+    var total = pdfDoc.numPages;
+    document.getElementById("convertBtn").disabled = true;
+    for (var i = 1; i <= total; i++) {
+        st.textContent = "正在转换第 " + i + "/" + total + " 页...";
+        var canvas = document.createElement("canvas");
+        await renderPage(i, canvas);
+        canvas.toBlob(function(blob) {
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "page_" + i + ".png";
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        }, "image/png");
+        await new Promise(function(r){setTimeout(r, 300)});
+    }
+    st.textContent = "转换完成! " + total + " 张PNG图片已开始下载";
+    document.getElementById("convertBtn").disabled = false;
+}
+
+async function renderPage(num, canvas) {
+    var page = await pdfDoc.getPage(num);
+    var scale = 1.5;
+    var viewport = page.getViewport({scale: scale});
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    var ctx = canvas.getContext("2d");
+    await page.render({canvasContext: ctx, viewport: viewport}).promise;
+}
+
+document.getElementById("convertBtn").addEventListener("click", convertAll);
+document.getElementById("clearBtn").addEventListener("click", function(){
+    pdfDoc = null; fileBytes = null; fileInfo.classList.remove("show"); ac.classList.remove("show");
+    fi.value = ""; st.textContent = "";
+});
 </script>
 </body>
 </html>

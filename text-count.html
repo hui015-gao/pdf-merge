@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>文本统计与去重</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;min-height:100vh;display:flex;flex-direction:column}
+.nav{background:#fff;padding:12px 24px;border-bottom:1px solid #e8eaed}
+.nav a{color:#1a73e8;text-decoration:none;font-size:.9rem}
+.container{max-width:800px;margin:0 auto;padding:24px 20px;flex:1}
+h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:16px}
+.stats{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
+.stat{background:#fff;padding:10px 18px;border-radius:8px;text-align:center;min-width:80px}
+.stat .num{font-size:1.3rem;font-weight:700;color:#1a73e8}
+.stat .lbl{font-size:.75rem;color:#80868b;margin-top:2px}
+textarea{width:100%;padding:14px;border:1px solid #dadce0;border-radius:8px;font-size:.9rem;line-height:1.7;resize:vertical;min-height:220px;outline:none;font-family:inherit}
+textarea:focus{border-color:#1a73e8}
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.btn{padding:8px 18px;border:none;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-primary{background:#1a73e8;color:#fff}.btn-primary:hover{background:#1557b0}
+.btn-secondary{background:#fff;color:#5f6368;border:1px solid #dadce0}.btn-secondary:hover{background:#f0f0f0}
+.btn-accent{background:#0d904f;color:#fff}.btn-accent:hover{background:#0a773e}
+.footer{text-align:center;padding:24px 20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed;margin-top:auto}
+</style></head>
+<body>
+<div class="nav"><a href="/pdf-merge/">&larr; 返回工具集</a></div>
+<div class="container"><h1>文本统计与去重</h1>
+<div class="stats" id="stats">
+<div class="stat"><div class="num" id="chars">0</div><div class="lbl">字符数</div></div>
+<div class="stat"><div class="num" id="charsNoSpace">0</div><div class="lbl">不含空格</div></div>
+<div class="stat"><div class="num" id="words">0</div><div class="lbl">单词数</div></div>
+<div class="stat"><div class="num" id="lines">0</div><div class="lbl">行数</div></div>
+<div class="stat"><div class="num" id="paras">0</div><div class="lbl">段落数</div></div>
+</div>
+<textarea id="input" placeholder="粘贴或输入文本..."></textarea>
+<div class="actions">
+<button class="btn btn-primary" onclick="countAll()">统计</button>
+<button class="btn btn-accent" onclick="copyText()">复制</button>
+<button class="btn btn-secondary" onclick="dedup()">去重</button>
+<button class="btn btn-secondary" onclick="removeEmpty()">去空行</button>
+<button class="btn btn-secondary" onclick="sortLines()">排序</button>
+<button class="btn btn-secondary" onclick="clearText()">清空</button>
+</div></div>
+<footer class="footer"><p>文本在浏览器本地处理</p></footer>
+<script>
+var input=document.getElementById("input");
+input.addEventListener("input",countAll);
+function countAll(){var t=input.value;document.getElementById("chars").textContent=t.length;document.getElementById("charsNoSpace").textContent=t.replace(/\s/g,"").length;document.getElementById("words").textContent=(t.match(/[\u4e00-\u9fff\u3400-\u4dbf]|[\w]+/g)||[]).length;document.getElementById("lines").textContent=t.split("\n").length;document.getElementById("paras").textContent=t.split("\n\n").filter(function(l){return l.trim()}).length||(t.trim()?1:0)}
+function copyText(){navigator.clipboard.writeText(input.value)}
+function dedup(){var lines=input.value.split("\n");var seen={};var result=[];lines.forEach(function(l){if(!seen[l]){seen[l]=true;result.push(l)}});input.value=result.join("\n");countAll()}
+function removeEmpty(){input.value=input.value.split("\n").filter(function(l){return l.trim()}).join("\n");countAll()}
+function sortLines(){input.value=input.value.split("\n").sort().join("\n");countAll()}
+function clearText(){input.value="";countAll()}
+countAll();
+</script></body></html>

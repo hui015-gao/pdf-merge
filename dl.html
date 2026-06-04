@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>文件下载</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,Microsoft YaHei,sans-serif;background:linear-gradient(135deg,#eff6ff,#f5f3ff);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:20px;padding:36px 28px;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.06);text-align:center}
+.card .icon{font-size:3rem;margin-bottom:12px}
+.card .filename{font-size:1rem;font-weight:700;color:#1a1a2e;margin-bottom:4px;word-break:break-all}
+.card .filesize{font-size:.82rem;color:#94a3b8;margin-bottom:24px}
+.card .btn{display:block;width:100%;padding:16px;background:#6366f1;color:#fff;border:none;border-radius:12px;font-size:1.05rem;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;transition:all .2s;text-align:center}
+.card .btn:hover{background:#4f46e5;transform:translateY(-1px)}
+.card .btn:active{transform:scale(.97)}
+.card .btn-open{background:#fff;color:#6366f1;border:2px solid #6366f1}
+.card .btn-open:hover{background:#f0f0ff}
+.card .hint{font-size:.78rem;color:#94a3b8;margin-top:8px;line-height:1.5}
+.card .hint a{color:#6366f1}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="icon">📥</div>
+<div class="filename" id="fname">文件</div>
+<div class="filesize" id="fsize"></div>
+<button class="btn" id="dlBtn" onclick="download()">下载文件</button>
+<button class="btn btn-open" onclick="openInBrowser()">在浏览器中打开</button>
+<div class="hint" id="hint">点击下载按钮保存到手机</div>
+</div>
+<script>
+const params = new URLSearchParams(window.location.search);
+const url = params.get("u") || params.get("url") || "";
+if (url) {
+  // Extract filename from URL
+  let fname = url.split("/").pop().split("?")[0];
+  try { fname = decodeURIComponent(fname); } catch(e) {}
+  // Remove timestamp prefix
+  fname = fname.replace(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.\d{3}Z_/, "").replace(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}_/, "");
+  document.getElementById("fname").textContent = fname || "文件";
+  document.title = fname + " - 下载";
+  window._dlUrl = url;
+}
+
+function download() {
+  if (!window._dlUrl) return;
+  const a = document.createElement("a");
+  a.href = window._dlUrl;
+  a.download = document.getElementById("fname").textContent;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  document.getElementById("hint").textContent = "下载已开始！如未弹出，请点击"在浏览器中打开"";
+}
+
+function openInBrowser() {
+  if (window._dlUrl) window.open(window._dlUrl, "_blank");
+}
+</script>
+</body></html>

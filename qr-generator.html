@@ -94,7 +94,7 @@ function generate() {
     // For text mode, encode as URL so WeChat can display it
     let qrText = text;
     if (currentMode === "text") {
-      qrText = "https://hui015-gao.github.io/pdf-merge/show-text.html#" + encodeURIComponent(text);
+      qrText = "https://hui015-gao.github.io/pdf-merge/qr-view.html#" + encodeURIComponent(text);
     }
     qrInstance = new QRCode(container, {
       text: qrText,

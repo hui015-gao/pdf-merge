@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>扫码查看</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,Microsoft YaHei,sans-serif;background:linear-gradient(135deg,#fce4ec,#f3e5f5,#e8eaf6);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:24px;padding:44px 36px 36px;max-width:520px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.06);text-align:center;position:relative;border:3px solid #f8bbd0}
+/* Cat ears */
+.card::before,.card::after{content:"";position:absolute;top:-22px;width:36px;height:36px;background:#fff;border:3px solid #f8bbd0;border-radius:50% 50% 0 0;border-bottom:none}
+.card::before{left:40px;transform:rotate(-25deg);border-right:3px solid #f8bbd0}
+.card::after{right:40px;transform:rotate(25deg);border-left:3px solid #f8bbd0}
+/* Inner ear */
+.ears{position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:100%;height:0}
+.content{font-size:1.05rem;line-height:1.9;color:#4a4a4a;word-break:break-word;text-align:left;white-space:pre-wrap;padding:8px 0}
+/* Cat face */
+.cat-face{font-size:2.8rem;margin-bottom:0;animation:bounce 3s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+/* Paws */
+.paws{display:flex;justify-content:center;gap:12px;margin-top:20px;opacity:.6}
+.paws span{font-size:1.2rem}
+.url-line{margin-top:16px;padding-top:14px;border-top:2px dashed #f8bbd0;font-size:.82rem;color:#ab47bc;word-break:break-all}
+.url-line a{color:#ab47bc;text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="cat-face">🐱</div>
+<div class="content" id="content"></div>
+<div class="paws"><span>🐾</span><span>🐾</span><span>🐾</span></div>
+<div class="url-line" id="urlInfo" style="display:none"></div>
+</div>
+<script>
+let text = decodeURIComponent((window.location.hash || "").replace(/^#/, ""));
+if (!text) { const p = new URLSearchParams(window.location.search); text = p.get("t") || ""; }
+
+if (text) {
+  try { document.getElementById("content").textContent = decodeURIComponent(text); }
+  catch(e) { document.getElementById("content").textContent = text; }
+  document.title = text.substring(0, 16) || "扫码查看";
+} else {
+  document.getElementById("content").textContent = "喵~ 没有找到内容";
+}
+
+const txt = document.getElementById("content").textContent;
+if (txt && /^https?:\/\//.test(txt.trim())) {
+  const url = txt.trim();
+  document.getElementById("content").innerHTML = '<a href="' + url + '" target="_blank" style="color:#ab47bc">' + url + '</a>';
+  document.getElementById("urlInfo").style.display = "block";
+  document.getElementById("urlInfo").innerHTML = '🐾 <a href="' + url + '" target="_blank">打开链接</a>';
+}
+</script>
+</body></html>

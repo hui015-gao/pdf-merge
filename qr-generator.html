@@ -11,202 +11,161 @@ h1{font-size:1.5rem;text-align:center;margin-bottom:4px}
 .mode-tabs button{padding:8px 16px;border:2px solid #e2e8f0;background:#fff;border-radius:8px;font-size:.85rem;cursor:pointer;font-family:inherit;transition:all .15s}
 .mode-tabs button.active{background:#6366f1;color:#fff;border-color:#6366f1}
 .input-area{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #eee}
-.input-area textarea{width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;min-height:80px;resize:vertical;outline:none;font-family:inherit;line-height:1.6}
-.input-area textarea:focus{border-color:#6366f1}
+textarea{width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;min-height:80px;resize:vertical;outline:none;font-family:inherit;line-height:1.6}
+textarea:focus{border-color:#6366f1}
 .hint{font-size:.78rem;color:#94a3b8;margin-top:6px;line-height:1.5}
+.dropzone{border:2px dashed #d2d6dc;border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all .2s}
+.dropzone:hover,.dropzone.dragover{border-color:#6366f1;background:#f0f7ff}
+.dropzone svg{width:36px;height:36px;color:#5f6368;margin-bottom:8px}
 .preview{text-align:center;margin:20px 0;min-height:180px;display:flex;align-items:center;justify-content:center}
 #qrContainer canvas,#qrContainer img{max-width:280px;border:12px solid #fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
 .info-box{background:#eff6ff;border-radius:8px;padding:14px 18px;margin-top:12px;font-size:.85rem;color:#1e40af;line-height:1.6}
 .info-box code{background:#dbeafe;padding:2px 6px;border-radius:4px;font-size:.82rem}
-.actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.actions{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.status{text-align:center;color:#64748b;font-size:.88rem;min-height:22px;margin-top:8px}
 </style>
 </head>
 <body>
 <div class="nav-back"><a href="/pdf-merge/">&larr; 返回工具集</a></div>
 <div class="container">
 <h1>二维码生成器</h1>
-<p class="sub">文本/网址/文件链接 &middot; 中文完美支持 &middot; 微信可扫</p>
+<p class="sub">文本 / 网址 / 分享链接 / 上传文件 &middot; 微信可扫</p>
 
 <div class="mode-tabs">
-<button class="active" onclick="switchMode('text')">文本</button>
-<button onclick="switchMode('url')">网址链接</button>
-<button onclick="switchMode('file')">分享链接</button>
-<button onclick="switchMode('upload')">上传文件</button>
+<button id="tabText" class="active" onclick="switchMode('text')">文本</button>
+<button id="tabUrl" onclick="switchMode('url')">网址链接</button>
+<button id="tabLink" onclick="switchMode('link')">分享链接</button>
+<button id="tabUpload" onclick="switchMode('upload')">上传文件</button>
 </div>
 
-<div class="input-area" id="textMode">
-<textarea id="textInput" placeholder="输入文字内容，中文可直接扫码显示..." oninput="generate()">你好！这是一段中文测试文字。微信扫码即可显示。</textarea>
-<div class="hint">文本模式：扫描后直接显示文字，中文完美支持。</div>
+<!-- Text Mode -->
+<div class="input-area" id="modeText">
+<textarea id="inputText" placeholder="输入文字内容..." oninput="genQR()">你好！微信扫码查看这段文字</textarea>
+<div class="hint">文本模式：微信扫码跳转猫猫页面显示文字</div>
 </div>
 
-<div class="input-area" id="urlMode" style="display:none">
-<textarea id="urlInput" placeholder="粘贴网址，如 https://example.com" oninput="generate()"></textarea>
-<div class="hint">网址模式：扫描后打开网页。</div>
+<!-- URL Mode -->
+<div class="input-area" id="modeUrl" style="display:none">
+<textarea id="inputUrl" placeholder="粘贴网址，如 https://example.com" oninput="genQR()"></textarea>
+<div class="hint">网址模式：微信扫码打开网页</div>
 </div>
 
-<div class="input-area" id="fileMode" style="display:none">
-<textarea id="fileInput" placeholder="粘贴网盘分享链接（百度网盘/阿里云盘/蓝奏云）" oninput="generate()"></textarea>
-<div class="hint">把文件上传到网盘 &rarr; 生成分享链接 &rarr; 粘贴到此处。扫描即可访问。</div>
-<div class="input-area" id="uploadMode" style="display:none">
-<div class="dropzone" id="uploadDz" onclick="document.getElementById('uploadInput').click()" style="padding:40px 24px;cursor:pointer;margin-bottom:0">
-<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-<div style="font-size:.95rem;margin-bottom:4px">点击选择文件 或 拖拽</div>
+<!-- Link Mode -->
+<div class="input-area" id="modeLink" style="display:none">
+<textarea id="inputLink" placeholder="粘贴网盘分享链接" oninput="genQR()"></textarea>
+<div class="hint">把文件上传到网盘，粘贴分享链接即可</div>
+</div>
+
+<!-- Upload Mode -->
+<div class="input-area" id="modeUpload" style="display:none">
+<div class="dropzone" id="uplDz" onclick="document.getElementById('uplFile').click()">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+<div style="font-size:.95rem;margin:8px 0 4px">选择文件 或 拖拽</div>
 <div style="font-size:.78rem;color:#94a3b8">图片/PDF/文档 &middot; 最大5MB</div>
 <button class="btn btn-primary" style="margin-top:12px;pointer-events:none">选择文件</button>
 </div>
-<input type="file" class="file-input" id="uploadInput" onchange="handleUploadFile(this.files[0])">
-<div id="uploadStatus" style="text-align:center;margin-top:12px;font-size:.88rem;color:#64748b"></div>
+<input type="file" id="uplFile" class="file-input" onchange="doUpload(this.files[0])">
+<div class="status" id="uplStatus"></div>
 </div>
-<div class="preview" id="previewArea"><div id="qrContainer"></div></div>
 
-<div class="info-box" id="wechatInfo" style="display:none"></div>
-
-<div class="actions">
-<button class="btn btn-success" onclick="downloadPNG()">下载 PNG</button>
-<button class="btn btn-outline" onclick="downloadSVG()">下载 SVG</button>
+<div class="preview"><div id="qrContainer"></div></div>
+<div class="info-box" id="infoBox" style="display:none"></div>
+<div class="actions"><button class="btn btn-success" onclick="downloadPNG()">下载 PNG</button></div>
 </div>
-</div>
-<footer class="footer"><p>二维码在浏览器本地生成，内容不会上传</p></footer>
+<footer class="footer"><p>文件上传至Gitee托管 &middot; 二维码浏览器本地生成</p></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
 <script src="auth-config.js"></script>
 <script src="auth-check.js"></script>
 <script>
-let currentMode = "text";
+let mode = "text";
 let qrInstance = null;
 
-function switchMode(mode) {
-  currentMode = mode;
-  document.querySelectorAll(".mode-tabs button").forEach((b, i) => b.classList.toggle("active", i === ["text","url","file","upload"].indexOf(mode)));
-  document.getElementById("textMode").style.display = mode === "text" ? "block" : "none";
-  document.getElementById("urlMode").style.display = mode === "url" ? "block" : "none";
-  document.getElementById("fileMode").style.display = mode === "file" ? "block" : "none";
-document.getElementById("uploadMode").style.display = mode === "upload" ? "block" : "none";
-  generate();
+function switchMode(m) {
+  mode = m;
+  ["text","url","link","upload"].forEach((k,i) => {
+    document.getElementById("tab"+["Text","Url","Link","Upload"][i]).classList.toggle("active", k===m);
+    document.getElementById("mode"+["Text","Url","Link","Upload"][i]).style.display = k===m ? "block" : "none";
+  });
+  if (m !== "upload") genQR();
 }
 
-function getInputText() {
-  if (currentMode === "text") return document.getElementById("textInput").value.trim();
-  if (currentMode === "url") return document.getElementById("urlInput").value.trim();
-  return document.getElementById("fileInput").value.trim();
-}
-
-function generate() {
-  if (currentMode === "upload") { document.getElementById("qrContainer").innerHTML = ""; return; }
-  const text = getInputText();
-  const container = document.getElementById("qrContainer");
-  const info = document.getElementById("wechatInfo");
-  container.innerHTML = "";
-  qrInstance = null;
-
-  if (!text) { info.style.display = "none"; return; }
-
-  try {
-    // For text mode, encode as URL so WeChat can display it
-    let qrText = text;
-    if (currentMode === "text") {
-      qrText = "https://hui015-gao.github.io/pdf-merge/qr-view.html#" + encodeURIComponent(text);
-    }
-    qrInstance = new QRCode(container, {
-      text: qrText,
-      width: 280,
-      height: 280,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.H
-    });
-
-    // Show preview info
-    info.style.display = "block";
-    if (currentMode === "text") {
-      info.innerHTML = "<strong>微信扫描效果：</strong>微信将直接显示以下文字<br><code>" + text.substring(0, 80).replace(/</g,"&lt;").replace(/&/g,"&amp;") + (text.length > 80 ? "..." : "") + "</code>";
-    } else if (currentMode === "url") {
-      info.innerHTML = "<strong>微信扫描效果：</strong>微信将提示打开网页<br><code>" + text.substring(0, 60).replace(/</g,"&lt;").replace(/&/g,"&amp;") + "</code><br>点击「在浏览器中打开」即可访问";
-    } else {
-      info.innerHTML = "<strong>微信扫描效果：</strong>微信将跳转到分享链接<br>用户可在微信内直接访问网盘链接下载文件";
-    }
-  } catch(e) {
-    container.innerHTML = '<div style="color:#ef4444;padding:20px">内容过长，请缩短后重试</div>';
-    info.style.display = "none";
-  }
-}
-
-function getQRCanvas() {
-  const container = document.getElementById("qrContainer");
-  // qrcodejs2 creates a canvas or img element
-  const canvas = container.querySelector("canvas");
-  const img = container.querySelector("img");
-  if (canvas) return canvas;
-  if (img) {
-    // Convert img to canvas
-    const c = document.createElement("canvas");
-    c.width = img.width;
-    c.height = img.height;
-    c.getContext("2d").drawImage(img, 0, 0);
-    return c;
-  }
+function getContent() {
+  if (mode === "text") return document.getElementById("inputText").value.trim();
+  if (mode === "url") return document.getElementById("inputUrl").value.trim();
+  if (mode === "link") return document.getElementById("inputLink").value.trim();
   return null;
 }
 
-function downloadPNG() {
-  const canvas = getQRCanvas();
-  if (!canvas) return;
-  const a = document.createElement("a");
-  a.href = canvas.toDataURL("image/png");
-  a.download = "qrcode.png";
-  a.click();
-}
-
-function downloadSVG() {
-  const text = getInputText();
+function genQR() {
+  if (mode === "upload") return;
+  const text = getContent();
+  const c = document.getElementById("qrContainer");
+  const info = document.getElementById("infoBox");
+  c.innerHTML = ""; qrInstance = null; info.style.display = "none";
   if (!text) return;
 
-  // Generate QR as SVG using qrcode-generator for SVG support
-  const qr = qrcode(0, "H");
-  qr.addData(text);
-  qr.make();
-  const svg = qr.createSvgTag(10, 4);
-  const blob = new Blob([svg], { type: "image/svg+xml" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "qrcode.svg";
-  a.click();
+  let qrText = text;
+  if (mode === "text") {
+    qrText = "https://hui015-gao.github.io/pdf-merge/qr-view.html#" + encodeURIComponent(text);
+  }
+
+  try {
+    qrInstance = new QRCode(c, { text: qrText, width: 280, height: 280, correctLevel: QRCode.CorrectLevel.H });
+    info.style.display = "block";
+    if (mode === "text") info.innerHTML = "<strong>微信扫描：</strong>打开猫猫页面显示文字";
+    else if (mode === "url") info.innerHTML = "<strong>微信扫描：</strong>打开网页";
+    else info.innerHTML = "<strong>微信扫描：</strong>跳转到分享链接";
+  } catch(e) { c.innerHTML = '<div style="color:#ef4444;padding:20px">内容过长</div>'; }
 }
 
-async function handleUploadFile(file) {
+async function doUpload(file) {
   if (!file) return;
-  if (file.size > 5*1024*1024) { document.getElementById("uploadStatus").textContent = "文件不能超过5MB"; return; }
-  const status = document.getElementById("uploadStatus");
-  status.textContent = "上传中...";
+  if (file.size > 5*1024*1024) { document.getElementById("uplStatus").textContent = "文件不能超过5MB"; return; }
+  const st = document.getElementById("uplStatus");
+  st.textContent = "上传中...";
+
   try {
     const ts = new Date().toISOString().replace(/[:.]/g,"-");
     const path = "uploads/" + ts + "_" + file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result.split(",")[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+    const base64 = await new Promise((res,rej) => {
+      const r = new FileReader(); r.onload = e => res(e.target.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file);
     });
     const resp = await fetch("https://gitee.com/api/v5/repos/" + AUTH_CONFIG.giteeOwner + "/" + AUTH_CONFIG.giteeRepo + "/contents/" + path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ access_token: AUTH_CONFIG.giteeToken, content: base64, message: "Upload via QR tool: " + file.name })
+      body: JSON.stringify({ access_token: AUTH_CONFIG.giteeToken, content: base64, message: "Upload: " + file.name })
     });
-    if (!resp.ok) { const err = await resp.json(); throw new Error(err.message || "Upload failed"); }
+    if (!resp.ok) { const er = await resp.json(); throw new Error(er.message || "Upload failed"); }
     const data = await resp.json();
-    const url = "https://gitee.com/" + AUTH_CONFIG.giteeOwner + "/" + AUTH_CONFIG.giteeRepo + "/raw/master/" + path;
-    status.innerHTML = "上传成功! <a href=\"" + url + "\" target=\"_blank\" style=\"color:#6366f1\">查看文件</a>";
-    // Generate QR for the URL directly
+    const url = data.content.download_url;
+    st.innerHTML = "上传成功! <a href=\"" + url + "\" target=\"_blank\" style=\"color:#6366f1\">查看</a>";
+
     document.getElementById("qrContainer").innerHTML = "";
     qrInstance = new QRCode(document.getElementById("qrContainer"), {
       text: url, width: 280, height: 280, correctLevel: QRCode.CorrectLevel.H
     });
-    document.getElementById("wechatInfo").style.display = "block";
-    document.getElementById("wechatInfo").innerHTML = "<strong>扫码下载文件：</strong> " + file.name + " (" + (file.size/1024).toFixed(0) + "KB)";
+    document.getElementById("infoBox").style.display = "block";
+    document.getElementById("infoBox").innerHTML = "<strong>扫码下载：</strong>" + file.name + " (" + (file.size/1024).toFixed(0) + "KB)";
   } catch(e) {
-    status.textContent = "上传失败: " + (e.message || "网络错误");
+    st.textContent = "上传失败: " + (e.message || "网络错误");
   }
 }
-generate();
+
+function downloadPNG() {
+  const c = document.getElementById("qrContainer").querySelector("canvas");
+  const i = document.getElementById("qrContainer").querySelector("img");
+  const src = c ? c.toDataURL("image/png") : (i ? i.src : null);
+  if (!src) return;
+  const a = document.createElement("a"); a.href = src; a.download = "qrcode.png"; a.click();
+}
+
+// Drag/drop for upload
+const dz = document.getElementById("uplDz");
+dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("dragover"); });
+dz.addEventListener("dragleave", () => dz.classList.remove("dragover"));
+dz.addEventListener("drop", e => { e.preventDefault(); dz.classList.remove("dragover"); if(e.dataTransfer.files.length) doUpload(e.dataTransfer.files[0]); });
+
+genQR();
 </script>
 </body></html>

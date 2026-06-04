@@ -39,7 +39,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Microsoft YaHei,sans-serif;bac
 
   // Fetch via Gitee API (returns base64 content)
   const apiUrl = "https://gitee.com/api/v5/repos/gaoahui_0/files2/contents/" + path + "?access_token=" + AUTH_CONFIG.giteeToken;
-  fetch(apiUrl)
+  const ctrl = new AbortController(); setTimeout(function(){ ctrl.abort(); }, 15000); fetch(apiUrl, {signal: ctrl.signal})
     .then(r => r.json())
     .then(data => {
       if (!data.content) throw new Error("No content");

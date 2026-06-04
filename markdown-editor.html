@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="免费在线Markdown编辑器，实时预览，支持GitHub风格渲染。无需注册。">
+<title>在线Markdown编辑器 - 实时预览</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;min-height:100vh;display:flex;flex-direction:column}
+.nav{background:#fff;padding:0 24px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.nav a{display:inline-flex;align-items:center;gap:5px;padding:14px 16px;text-decoration:none;color:#5f6368;font-size:.9rem;border-bottom:3px solid transparent;transition:color .2s,border-color .2s}
+.nav a:hover{color:#1a73e8}
+.nav a.active{color:#1a73e8;border-bottom-color:#1a73e8;font-weight:600}
+.nav .brand{font-weight:700;font-size:1rem;color:#1a1a1a;margin-right:16px;padding:14px 8px}
+.container{max-width:960px;margin:0 auto;padding:20px;flex:1;display:flex;flex-direction:column;gap:16px}
+h1{font-size:1.4rem;color:#1a1a1a;text-align:center;margin-bottom:-8px}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.toolbar button{padding:6px 14px;border:1px solid #dadce0;border-radius:6px;background:#fff;color:#333;font-size:.85rem;cursor:pointer;font-family:inherit;transition:background .15s}
+.toolbar button:hover{background:#f0f0f0}
+.panes{display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;min-height:400px}
+.pane{background:#fff;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.pane .label{padding:8px 16px;font-size:.8rem;color:#80868b;background:#fafafa;border-bottom:1px solid #f0f0f0;font-weight:600}
+.pane textarea{flex:1;padding:16px;border:none;resize:none;outline:none;font-family:"SF Mono",Monaco,Consolas,monospace;font-size:.85rem;line-height:1.6}
+.pane .preview-content{flex:1;padding:16px;overflow-y:auto;line-height:1.7;font-size:.9rem}
+.preview-content h1,.preview-content h2,.preview-content h3{margin:12px 0 6px}
+.preview-content p{margin:6px 0}
+.preview-content code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:.85rem}
+.preview-content pre{background:#1e1e1e;color:#d4d4d4;padding:16px;border-radius:6px;overflow-x:auto;font-size:.85rem}
+.preview-content pre code{background:none;padding:0;color:inherit}
+.preview-content blockquote{border-left:3px solid #1a73e8;margin:8px 0;padding:4px 12px;color:#5f6368;background:#f8f9fa}
+.preview-content table{border-collapse:collapse;width:100%;margin:8px 0}
+.preview-content th,.preview-content td{border:1px solid #e0e0e0;padding:6px 12px;text-align:left}
+.preview-content th{background:#f5f6f8;font-weight:600}
+.footer{text-align:center;padding:20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed}
+@media(max-width:700px){.panes{grid-template-columns:1fr;grid-template-rows:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="nav">
+<a href="/pdf-merge/" class="brand">工具集</a>
+<a href="/pdf-merge/">PDF合并</a>
+<a href="/pdf-merge/pdf-split.html">PDF拆分</a>
+<a href="/pdf-merge/image-compress.html">图片压缩</a>
+<a href="/pdf-merge/json-formatter.html">JSON格式化</a>
+<a href="/pdf-merge/qr-generator.html">二维码生成</a>
+<a href="/pdf-merge/markdown-editor.html" class="active">Markdown</a>
+</div>
+
+<div class="container">
+<h1>Markdown编辑器 - 实时预览</h1>
+<div class="toolbar">
+<button onclick="insertMarkdown('**','**','粗体')">B 粗体</button>
+<button onclick="insertMarkdown('*','*','斜体')">I 斜体</button>
+<button onclick="insertMarkdown('~~','~~','删除')">S 删除线</button>
+<button onclick="insertMarkdown('# ','','标题')">H1</button>
+<button onclick="insertMarkdown('## ','','子标题')">H2</button>
+<button onclick="insertMarkdown('- ','','列表')">列表</button>
+<button onclick="insertMarkdown('1. ','','编号')">编号</button>
+<button onclick="insertMarkdown('[','](url)','链接')">链接</button>
+<button onclick="insertMarkdown('![alt](','')','图片')">图片</button>
+<button onclick="insertMarkdown('```\n','\n```','代码块')">代码块</button>
+<button onclick="insertMarkdown('`','`','行内代码')">&#60;/&#62;</button>
+<button onclick="insertMarkdown('> ','')">引用</button>
+</div>
+<div class="panes" id="panes">
+<div class="pane"><div class="label">编辑</div><textarea id="editor" placeholder="# 开始输入Markdown..."></textarea></div>
+<div class="pane"><div class="label">预览</div><div class="preview-content" id="preview"></div></div>
+</div>
+</div>
+
+<footer class="footer"><p>所有编辑在浏览器本地完成</p></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+<script>
+const editor = document.getElementById("editor"), preview = document.getElementById("preview");
+editor.addEventListener("input", () => { preview.innerHTML = marked.parse(editor.value||" ") });
+editor.value = "# 欢迎使用Markdown编辑器\n\n输入 **Markdown** 语法，右侧实时预览。\n\n## 示例\n\n- 列表项 1\n- 列表项 2\n\n> 引用文字\n\n```python\nprint('hello world')\n```";
+preview.innerHTML = marked.parse(editor.value);
+
+function insertMarkdown(before, after) {
+const ta = editor, start = ta.selectionStart, end = ta.selectionEnd, text = ta.value;
+const selected = text.substring(start,end);
+ta.value = text.substring(0,start) + before + selected + after + text.substring(end);
+ta.focus(); ta.setSelectionRange(start+before.length, start+before.length+selected.length);
+ta.dispatchEvent(new Event("input"));
+}
+</script>
+</body>
+</html>

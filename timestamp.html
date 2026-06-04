@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="在线Unix时间戳转换工具，时间戳转日期、日期转时间戳，实时显示当前时间戳。">
+<title>在线时间戳转换 - Unix时间戳转日期</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;min-height:100vh;display:flex;flex-direction:column}
+.nav{background:#fff;padding:0 24px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.nav a{display:inline-flex;align-items:center;gap:5px;padding:14px 16px;text-decoration:none;color:#5f6368;font-size:.9rem;border-bottom:3px solid transparent;transition:color .2s,border-color .2s}
+.nav a:hover{color:#1a73e8}
+.nav a.active{color:#1a73e8;border-bottom-color:#1a73e8;font-weight:600}
+.nav .brand{font-weight:700;font-size:1rem;color:#1a1a1a;margin-right:16px;padding:14px 8px}
+.container{max-width:700px;margin:0 auto;padding:24px 20px;flex:1}
+h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
+.sub{text-align:center;color:#5f6368;font-size:.9rem;margin-bottom:24px}
+.current{background:#fff;border-radius:8px;padding:20px;text-align:center;margin-bottom:24px}
+.current .now{font-size:2rem;font-weight:700;color:#1a73e8;font-family:"SF Mono",Monaco,Consolas,monospace}
+.current .label{font-size:.85rem;color:#80868b;margin-top:4px}
+.current .datetime{font-size:1.1rem;color:#333;margin-top:6px}
+.converters{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.converter{background:#fff;border-radius:8px;padding:20px}
+.converter h3{font-size:1rem;margin-bottom:12px;color:#1a1a1a}
+.converter label{display:block;font-size:.85rem;color:#5f6368;margin-bottom:4px}
+.converter input{padding:10px 12px;border:1px solid #dadce0;border-radius:6px;font-size:.9rem;width:100%;font-family:"SF Mono",Monaco,Consolas,monospace;margin-bottom:8px;outline:none}
+.converter input:focus{border-color:#1a73e8}
+.converter .btn{padding:8px 20px;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;background:#1a73e8;color:#fff;transition:background .15s;font-family:inherit}
+.converter .btn:hover{background:#1557b0}
+.converter .result{margin-top:8px;padding:8px 12px;background:#f8f9fa;border-radius:6px;font-size:.9rem;min-height:24px;word-break:break-all}
+.footer{text-align:center;padding:24px 20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed;margin-top:auto}
+@media(max-width:600px){.converters{grid-template-columns:1fr}.container{padding:16px 10px}.current .now{font-size:1.5rem}}
+</style>
+</head>
+<body>
+<div class="nav">
+<a href="/pdf-merge/" class="brand">工具集</a>
+<a href="/pdf-merge/">PDF合并</a>
+<a href="/pdf-merge/pdf-split.html">PDF拆分</a>
+<a href="/pdf-merge/image-compress.html">图片压缩</a>
+<a href="/pdf-merge/json-formatter.html">JSON格式化</a>
+<a href="/pdf-merge/qr-generator.html">二维码生成</a>
+<a href="/pdf-merge/markdown-editor.html">Markdown</a>
+<a href="/pdf-merge/base64.html">Base64</a>
+<a href="/pdf-merge/timestamp.html" class="active">时间戳</a>
+</div>
+
+<div class="container">
+<h1>时间戳转换</h1>
+<p class="sub">Unix时间戳 &harr; 日期时间 互相转换</p>
+
+<div class="current">
+<div class="label">当前时间戳（秒）</div>
+<div class="now" id="nowTS">...</div>
+<div class="datetime" id="nowDT"></div>
+</div>
+
+<div class="converters">
+<div class="converter">
+<h3>时间戳 &rarr; 日期</h3>
+<label>输入Unix时间戳（秒）</label>
+<input type="number" id="tsToDateInput" placeholder="例如: 1700000000">
+<button class="btn" onclick="tsToDate()">转换</button>
+<div class="result" id="tsToDateResult"></div>
+</div>
+
+<div class="converter">
+<h3>日期 &rarr; 时间戳</h3>
+<label>选择日期时间</label>
+<input type="datetime-local" id="dateToTsInput">
+<button class="btn" onclick="dateToTs()">转换</button>
+<div class="result" id="dateToTsResult"></div>
+</div>
+</div>
+</div>
+
+<footer class="footer"><p>所有运算在浏览器本地完成</p></footer>
+
+<script>
+function pad(n){return String(n).padStart(2,'0')}
+function updateNow(){
+const now=new Date();
+document.getElementById("nowTS").textContent=Math.floor(now.getTime()/1000);
+document.getElementById("nowDT").textContent=now.getFullYear()+"-"+pad(now.getMonth()+1)+"-"+pad(now.getDate())+" "+pad(now.getHours())+":"+pad(now.getMinutes())+":"+pad(now.getSeconds())+" (UTC+8)";
+document.getElementById("dateToTsInput").value=now.toISOString().slice(0,16);
+}
+setInterval(updateNow,1000);updateNow();
+
+function tsToDate(){
+const v=document.getElementById("tsToDateInput").value;
+if(!v){document.getElementById("tsToDateResult").textContent="请输入时间戳";return}
+const ts=parseInt(v);
+if(ts<0||ts>99999999999){document.getElementById("tsToDateResult").textContent="请输入有效时间戳";return}
+const d=new Date(ts*1000);
+document.getElementById("tsToDateResult").textContent=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds());
+}
+function dateToTs(){
+const v=document.getElementById("dateToTsInput").value;
+if(!v){document.getElementById("dateToTsResult").textContent="请选择日期";return}
+const ts=Math.floor(new Date(v).getTime()/1000);
+document.getElementById("dateToTsResult").textContent=ts;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="免费在线PDF拆分工具，无需上传，完全浏览器处理。按页数拆分、提取指定页。">
+<title>在线PDF拆分 - 免费、安全、无需上传</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;min-height:100vh;display:flex;flex-direction:column}
+.nav{background:#fff;padding:0 24px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.nav a{display:inline-flex;align-items:center;gap:5px;padding:14px 16px;text-decoration:none;color:#5f6368;font-size:.9rem;border-bottom:3px solid transparent;transition:color .2s,border-color .2s}
+.nav a:hover{color:#1a73e8}
+.nav a.active{color:#1a73e8;border-bottom-color:#1a73e8;font-weight:600}
+.nav .brand{font-weight:700;font-size:1rem;color:#1a1a1a;margin-right:16px;padding:14px 8px}
+.container{max-width:800px;margin:0 auto;padding:32px 20px;flex:1}
+h1{font-size:1.6rem;color:#1a1a1a;text-align:center;margin-bottom:6px}
+.sub{text-align:center;color:#5f6368;font-size:.95rem;margin-bottom:28px}
+.sub span{color:#1a73e8;font-weight:600}
+.dropzone{border:2px dashed #d2d6dc;border-radius:8px;padding:40px 24px;text-align:center;background:#fff;transition:border-color .2s,background .2s;cursor:pointer}
+.dropzone:hover,.dropzone.dragover{border-color:#1a73e8;background:#f0f7ff}
+.dropzone svg{width:40px;height:40px;color:#5f6368;margin-bottom:8px}
+.dropzone .text{font-size:1rem;color:#333;margin-bottom:4px}
+.dropzone .hint{font-size:.82rem;color:#80868b}
+.file-info{display:none;margin-top:16px;background:#fff;border-radius:8px;padding:16px;text-align:center}
+.file-info.show{display:block}
+.file-info .name{font-weight:600;font-size:1rem}
+.file-info .pages{color:#1a73e8;font-size:1.2rem;font-weight:700;margin:4px 0}
+.options{display:none;margin-top:20px;background:#fff;border-radius:8px;padding:20px}
+.options.show{display:block}
+.options label{display:block;font-size:.9rem;color:#5f6368;margin-bottom:4px}
+.options input,.options select{padding:8px 12px;border:1px solid #dadce0;border-radius:6px;font-size:.9rem;width:100px;margin-bottom:12px}
+.actions{margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{padding:10px 28px;border:none;border-radius:6px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s,transform .1s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:#1a73e8;color:#fff}
+.btn-primary:hover{background:#1557b0}
+.btn-primary:disabled{background:#a8c7fa;cursor:not-allowed}
+.btn-secondary{background:#fff;color:#5f6368;border:1px solid #dadce0}
+.btn-secondary:hover{background:#f0f0f0}
+.status{text-align:center;margin-top:12px;font-size:.9rem;color:#5f6368;min-height:24px}
+.progress{width:100%;height:4px;background:#e8eaed;border-radius:2px;margin-top:8px;overflow:hidden;display:none}
+.progress .bar{height:100%;background:#1a73e8;border-radius:2px;width:0;transition:width .3s}
+.file-input{display:none}
+.footer{text-align:center;padding:24px 20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed;margin-top:auto}
+@media(max-width:600px){.container{padding:16px 10px}h1{font-size:1.3rem}}
+</style>
+</head>
+<body>
+<div class="nav">
+<a href="/pdf-merge/" class="brand">工具集</a>
+<a href="/pdf-merge/">PDF合并</a>
+<a href="/pdf-merge/pdf-split.html" class="active">PDF拆分</a>
+<a href="/pdf-merge/image-compress.html">图片压缩</a>
+<a href="/pdf-merge/json-formatter.html">JSON格式化</a>
+<a href="/pdf-merge/qr-generator.html">二维码生成</a>
+</div>
+
+<div class="container">
+<h1>在线PDF拆分</h1>
+<p class="sub">按页数自动拆分，或提取指定页 &mdash; <span>浏览器处理，无需上传</span></p>
+
+<div class="dropzone" id="dropzone">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+<div class="text">拖拽PDF文件到此处 或 点击选择</div>
+<div class="hint">支持单个PDF文件</div>
+<input type="file" class="file-input" id="fileInput" accept=".pdf,application/pdf">
+</div>
+
+<div class="file-info" id="fileInfo"><div class="name" id="fileName"></div><div class="pages" id="pageCount"></div></div>
+
+<div class="options" id="options">
+<label>拆分方式:</label>
+<select id="splitMode" style="width:100%;max-width:300px">
+<option value="n">每 N 页拆一份</option>
+<option value="single">每页拆成单独文件</option>
+<option value="range">提取页码范围</option>
+</select>
+<div id="nOption"><label style="margin-top:10px">每份页数:</label><input type="number" id="nPages" value="5" min="1" max="999"></div>
+<div id="rangeOption" style="display:none"><label style="margin-top:10px">页码范围（如 1-5，默认全文档）:</label><input type="text" id="pageRange" placeholder="如: 1-3" style="width:100%;max-width:200px"></div>
+</div>
+
+<div class="actions" id="actions">
+<button class="btn btn-primary" id="splitBtn">开始拆分</button>
+<button class="btn btn-secondary" id="clearBtn">重新选择</button>
+</div>
+<div class="progress hidden" id="progress"><div class="bar" id="progressBar"></div></div>
+<div class="status" id="status"></div>
+</div>
+
+<footer class="footer"><p>文件仅在浏览器中处理，不会上传到任何服务器</p></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script>
+const dz = document.getElementById("dropzone"), fi = document.getElementById("fileInput");
+let pdfDoc = null, pdfBytes = null;
+
+dz.addEventListener("click", () => fi.click());
+fi.addEventListener("change", (e) => e.target.files.length && loadPDF(e.target.files[0]));
+dz.addEventListener("dragover", e => {e.preventDefault();dz.classList.add("dragover")});
+dz.addEventListener("dragleave", () => dz.classList.remove("dragover"));
+dz.addEventListener("drop", e => {e.preventDefault();dz.classList.remove("dragover");e.dataTransfer.files.length&&loadPDF(e.dataTransfer.files[0])});
+
+document.getElementById("splitMode").addEventListener("change", function() {
+document.getElementById("nOption").style.display = this.value==="n"?"block":"none";
+document.getElementById("rangeOption").style.display = this.value==="range"?"block":"none";
+});
+
+async function loadPDF(file) {
+pdfBytes = await file.arrayBuffer();
+pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+document.getElementById("fileName").textContent = file.name;
+document.getElementById("pageCount").textContent = "共 " + pdfDoc.getPageCount() + " 页";
+document.getElementById("fileInfo").classList.add("show");
+document.getElementById("options").classList.add("show");
+document.getElementById("actions").style.display = "flex";
+}
+
+async function splitPDF() {
+if (!pdfDoc) { document.getElementById("status").textContent="请先选择PDF文件"; return; }
+const total = pdfDoc.getPageCount(), mode = document.getElementById("splitMode").value;
+const progress = document.getElementById("progress"), bar = document.getElementById("progressBar");
+const status = document.getElementById("status");
+progress.classList.remove("hidden"); bar.style.width="0"; status.textContent="处理中...";
+
+try {
+if (mode === "single") {
+for (let i=0;i<total;i++) { status.textContent="导出第 "+(i+1)+"/"+total+" 页..."; bar.style.width=(i/total*100)+"%";
+const d=await PDFLib.PDFDocument.create(); const [p]=await d.copyPages(pdfDoc,[i]); d.addPage(p);
+const b=await d.save(); downloadBlob(b,"page_"+(i+1)+".pdf"); }
+} else if (mode === "n") {
+const n=parseInt(document.getElementById("nPages").value)||5;
+let start=0,part=0;
+while(start<total) { const end=Math.min(start+n,total); status.textContent="导出第"+(start+1)+"-"+end+"页..."; bar.style.width=(start/total*100)+"%";
+const d=await PDFLib.PDFDocument.create(); const pages=await d.copyPages(pdfDoc,Array.from({length:end-start},(_,i)=>start+i));
+pages.forEach(p=>d.addPage(p)); const b=await d.save(); downloadBlob(b,"part_"+(++part)+".pdf"); start=end; }
+} else {
+const rng=document.getElementById("pageRange").value.trim();
+let pgs; if(rng){ const parts=rng.split("-"); const s=Math.max(1,parseInt(parts[0])||1)-1; const e=Math.min(total,(parseInt(parts[1])||total))-1; pgs=Array.from({length:e-s+1},(_,i)=>s+i); }
+else { pgs=Array.from({length:total},(_,i)=>i); }
+for(let i=0;i<pgs.length;i++) { status.textContent="导出第 "+(pgs[i]+1)+" 页..."; bar.style.width=(i/pgs.length*100)+"%";
+const d=await PDFLib.PDFDocument.create();const[p]=await d.copyPages(pdfDoc,[pgs[i]]);d.addPage(p);
+const b=await d.save();downloadBlob(b,"page_"+(pgs[i]+1)+".pdf"); }
+}
+status.textContent="拆分完成! 请在浏览器的下载记录中查看文件"; bar.style.width="100%";
+} catch(e){ status.textContent="拆分失败: "+(e.message||"未知错误"); console.error(e); }
+setTimeout(()=>{progress.classList.add("hidden");bar.style.width="0"},3000);
+}
+
+function downloadBlob(bytes,name){const b=new Blob([bytes],{type:"application/pdf"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href)}
+document.getElementById("splitBtn").addEventListener("click",splitPDF);
+document.getElementById("clearBtn").addEventListener("click",()=>{pdfDoc=null;pdfBytes=null;document.getElementById("fileInfo").classList.remove("show");document.getElementById("options").classList.remove("show");fi.value="";document.getElementById("status").textContent=""});
+</script>
+</body>
+</html>

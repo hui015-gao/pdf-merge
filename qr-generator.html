@@ -142,8 +142,9 @@ async function doUpload(file) {
     st.innerHTML = "上传成功! <a href=\"" + url + "\" target=\"_blank\" style=\"color:#6366f1\">查看</a>";
 
     document.getElementById("qrContainer").innerHTML = "";
+    const dlUrl = "https://hui015-gao.github.io/pdf-merge/dl.html?u=" + encodeURIComponent(url);
     qrInstance = new QRCode(document.getElementById("qrContainer"), {
-      text: url, width: 280, height: 280, correctLevel: QRCode.CorrectLevel.H
+      text: dlUrl, width: 280, height: 280, correctLevel: QRCode.CorrectLevel.H
     });
     document.getElementById("infoBox").style.display = "block";
     document.getElementById("infoBox").innerHTML = "<strong>扫码下载：</strong>" + file.name + " (" + (file.size/1024).toFixed(0) + "KB)";

@@ -14,87 +14,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,Microsoft YaHei,sans-serif;bac
 </style>
 </head>
 <body>
-<div class="card">
-<div class="icon">&#x1F4E5;</div>
-<div class="filename" id="fname">文件下载</div>
-<div class="status-text" id="status">加载中...</div>
-<button class="btn" id="dlBtn" onclick="forceDownload()">下载文件</button>
-<div class="hint" id="hint"></div>
-</div>
-
+<div class="card"><div class="icon">&#x1F4E5;</div><div class="filename" id="fname">文件下载</div><div class="status-text" id="status">加载中...</div><button class="btn" id="dlBtn" onclick="doDL()">下载文件</button><div class="hint" id="hint"></div></div>
 <script src="auth-config.js"></script>
 <script>
-(function(){
-  try {
-    // Check auth config
-    if (typeof AUTH_CONFIG === "undefined" || !AUTH_CONFIG.giteeToken) {
-      document.getElementById("status").textContent = "错误: 认证配置缺失";
-      return;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const path = params.get("p") || params.get("path") || "";
-
-    if (!path) {
-      document.getElementById("status").textContent = "错误: 缺少文件路径";
-      return;
-    }
-
-    // Show what we are fetching
-    document.getElementById("status").textContent = "获取: " + path.substring(0, 35) + "...";
-
-    // Extract filename
-    let fname = path.split("/").pop();
-    try { fname = decodeURIComponent(fname); } catch(e) {}
-    fname = fname.replace(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.\d{3}Z_/, "").replace(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}_/, "");
-    document.getElementById("fname").textContent = fname;
-    document.title = fname + " - 下载";
-    window._fname = fname;
-
-    // Fetch via Gitee API
-    const apiUrl = "https://gitee.com/api/v5/repos/gaoahui_0/files2/contents/" + path + "?access_token=" + AUTH_CONFIG.giteeToken;
-
-    // Use AbortController with timeout
-    const ctrl = new AbortController();
-    setTimeout(function() { ctrl.abort(); }, 20000);
-
-    fetch(apiUrl, { signal: ctrl.signal })
-      .then(function(r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
-      .then(async function(data) {
-        if (!data.content) throw new Error("无文件内容");
-        document.getElementById("status").textContent = "解码中...";
-        // Data URL approach
-        const resp = await fetch("data:application/octet-stream;base64," + data.content.replace(/\s/g, ""));
-        const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        window._blobUrl = url;
-        document.getElementById("status").textContent = "就绪 \u00b7 " + (data.size ? (data.size/1024).toFixed(0) + "KB" : "");
-        document.getElementById("dlBtn").style.display = "block";
-        setTimeout(function() { forceDownload(); }, 500);
-      })
-      .catch(function(e) {
-        document.getElementById("status").textContent = "获取失败: " + (e.name === "AbortError" ? "请求超时" : (e.message || "网络错误"));
-        document.getElementById("hint").textContent = "请检查网络连接后重试";
-      });
-
-  } catch(e) {
-    document.getElementById("status").textContent = "JS错误: " + (e.message || e);
-  }
-})();
-
-function forceDownload() {
-  if (window._blobUrl) {
-    var a = document.createElement("a");
-    a.href = window._blobUrl;
-    a.download = window._fname || "file";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    document.getElementById("status").textContent = "下载已开始";
-  }
-}
+(function(){try{
+if(typeof AUTH_CONFIG==="undefined"||!AUTH_CONFIG.giteeToken){document.getElementById("status").textContent="错误:认证配置缺失";return}
+var p=new URLSearchParams(window.location.search).get("p")||"";
+if(!p){document.getElementById("status").textContent="错误:缺少文件路径";return}
+document.getElementById("status").textContent="获取:"+p.substring(0,35)+"...";
+var fn=p.split("/").pop();try{fn=decodeURIComponent(fn)}catch(e){}
+fn=fn.replace(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.\d{3}Z_/,"").replace(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}_/,"");
+document.getElementById("fname").textContent=fn;document.title=fn+" - 下载";window._fn=fn;
+var url="https://gitee.com/api/v5/repos/gaoahui_0/files2/contents/"+p+"?access_token="+AUTH_CONFIG.giteeToken;
+var ctrl=new AbortController();setTimeout(function(){ctrl.abort()},20000);
+fetch(url,{signal:ctrl.signal}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(d){
+if(!d.content)throw new Error("无内容");
+window._dataUrl="data:application/octet-stream;base64,"+d.content.replace(/\s/g,"");
+var kb=(d.content.length*0.75/1024).toFixed(0);
+document.getElementById("status").textContent="就绪 · "+kb+"KB";
+document.getElementById("dlBtn").style.display="block";setTimeout(doDL,500);
+}).catch(function(e){document.getElementById("status").textContent="失败:"+(e.name==="AbortError"?"超时":(e.message||"错误"))})
+}catch(e){document.getElementById("status").textContent="JS错误:"+(e.message||e)}})();
+function doDL(){if(window._dataUrl){var a=document.createElement("a");a.href=window._dataUrl;a.download=window._fn||"file";document.body.appendChild(a);a.click();document.body.removeChild(a);document.getElementById("status").textContent="已开始"}}
 </script>
 </body></html>

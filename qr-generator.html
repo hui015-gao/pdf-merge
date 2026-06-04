@@ -92,6 +92,7 @@ function getInputText() {
 }
 
 function generate() {
+  if (currentMode === "upload") { document.getElementById("qrContainer").innerHTML = ""; return; }
   const text = getInputText();
   const container = document.getElementById("qrContainer");
   const info = document.getElementById("wechatInfo");

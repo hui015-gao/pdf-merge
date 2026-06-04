@@ -25,6 +25,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,Microsoft YaHei,sans-serif;bac
 <script src="auth-config.js"></script>
 <script>
 (function(){
+  try {
+  // Check auth-config loaded
+  if (typeof AUTH_CONFIG === "undefined" || !AUTH_CONFIG.giteeToken) {
+    document.getElementById("status").textContent = "错误: 认证配置未加载";
+    return;
+  }
   const params = new URLSearchParams(window.location.search);
   const path = params.get("p") || params.get("path") || "";
   if (!path) { document.getElementById("status").textContent = "未找到文件路径"; return; }
@@ -57,6 +63,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Microsoft YaHei,sans-serif;bac
       document.getElementById("status").textContent = "获取失败: " + (e.message || "网络错误");
       document.getElementById("hint").textContent = "请确认文件已上传且路径正确";
     });
+  } catch(e) { document.getElementById('status').textContent = 'JS错误: ' + (e.message || e); }
 })();
 
 function forceDownload() {

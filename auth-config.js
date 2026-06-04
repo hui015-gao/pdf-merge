@@ -6,10 +6,10 @@
 const AUTH_CONFIG = {
   // Admin master password hash
   adminHash: "9ad17b34f1d1ad383dfde1a6085fd6876248eba20fdad1c5fec8cb8f7d747ec1",
-  // Shared user password hash (default: "user2024")
-  userHash: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
+  // Shared user password hash (default: "071528")
+  userHash: "b8ac404613e97553f0fadc39a2266c4870a9e77dc016b411974efba9a6d3cda8",
   // Current shared password plaintext (only admin can see this)
-  sharedPassword: "user2024"
+  sharedPassword: "071528"
 };
 
 // Hash a string with SHA-256

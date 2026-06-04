@@ -41,11 +41,21 @@ fn=fn.replace(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.\d{3}Z_/,"").replace(/^\d{4
 document.getElementById("fname").textContent=fn;document.title=fn;
 
 // Direct Gitee raw URL with access_token (no referrer via link rel)
-var rawUrl="https://gitee.com/gaoahui_0/files2/raw/master/"+p+"?access_token="+AUTH_CONFIG.giteeToken;
-document.getElementById("dlBtn").href=rawUrl;
+// Fetch via API, then use data URL with correct MIME type
+var apiUrl="https://gitee.com/api/v5/repos/gaoahui_0/files2/contents/"+p+"?access_token="+AUTH_CONFIG.giteeToken;
+var ctrl=new AbortController();setTimeout(function(){ctrl.abort()},20000);
+fetch(apiUrl,{signal:ctrl.signal}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(d){
+if(!d.content)throw new Error("no content");
+var ext=fn.split(".").pop().toLowerCase();
+var mimes={png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",pdf:"application/pdf",zip:"application/zip",mp4:"video/mp4",mp3:"audio/mpeg",txt:"text/plain",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
+var mime=mimes[ext]||"application/octet-stream";
+var dataUrl="data:"+mime+";base64,"+d.content.replace(/\s/g,"");
+document.getElementById("dlBtn").onclick=function(){window.open(dataUrl)};
 document.getElementById("dlBtn").style.display="block";
-document.getElementById("status").textContent="就绪";
-document.getElementById("hint").textContent="点击按钮打开/下载文件";
+document.getElementById("status").textContent="就绪 \xb7 "+(d.content.length*0.75/1024).toFixed(0)+"KB";
+document.getElementById("dlBtn").textContent="打开文件";
+document.getElementById("hint").textContent="图片可长按保存";
+}).catch(function(e){document.getElementById("status").textContent="失败:"+(e.name==="AbortError"?"超时":(e.message||""))})
 
 }catch(e){
 document.getElementById("status").textContent="错误:"+(e.message||e)

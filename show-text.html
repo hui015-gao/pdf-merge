@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>扫码查看内容</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,Microsoft YaHei,sans-serif;background:#f5f6f8;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:16px;padding:40px;max-width:600px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.08);text-align:center}
+.card .icon{font-size:3rem;margin-bottom:16px}
+.card .title{font-size:.85rem;color:#888;margin-bottom:20px;text-transform:uppercase;letter-spacing:2px}
+.card .content{font-size:1.1rem;line-height:1.8;color:#1a1a2e;word-break:break-word;text-align:left;white-space:pre-wrap}
+.card .url-line{margin-top:20px;padding-top:16px;border-top:1px solid #eee;font-size:.85rem;color:#888;word-break:break-all}
+.card .url-line a{color:#6366f1}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="icon">📋</div>
+<div class="title">扫码内容</div>
+<div class="content" id="content"></div>
+<div class="url-line" id="urlInfo" style="display:none"></div>
+</div>
+<script>
+const params = new URLSearchParams(window.location.search);
+const text = params.get("t") || "";
+
+if (text) {
+  try {
+    const decoded = decodeURIComponent(text);
+    document.getElementById("content").textContent = decoded;
+    document.title = decoded.substring(0, 20) + " - 扫码查看";
+  } catch(e) {
+    document.getElementById("content").textContent = text;
+  }
+} else {
+  document.getElementById("content").textContent = "（无内容）";
+}
+
+// If there's a URL in the text, make it clickable
+const contentEl = document.getElementById("content");
+const txt = contentEl.textContent;
+if (txt && /^https?:\/\//.test(txt.trim())) {
+  const url = txt.trim();
+  contentEl.innerHTML = '<a href="' + url + '" target="_blank" style="color:#6366f1">' + url + '</a>';
+  document.getElementById("urlInfo").style.display = "block";
+  document.getElementById("urlInfo").innerHTML = '<a href="' + url + '" target="_blank">打开链接 &rarr;</a>';
+}
+</script>
+</body></html>

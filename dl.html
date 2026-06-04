@@ -44,17 +44,12 @@ if (url) {
 
 function download() {
   if (!window._dlUrl) return;
-  const a = document.createElement("a");
-  a.href = window._dlUrl;
-  a.download = document.getElementById("fname").textContent;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  document.getElementById("hint").textContent = "下载已开始！如未弹出，请点击"在浏览器中打开"";
+  // Direct URL redirect triggers native download on mobile
+  location.href = window._dlUrl;
 }
 
 function openInBrowser() {
-  if (window._dlUrl) window.open(window._dlUrl, "_blank");
+  if (window._dlUrl) window.open(window._dlUrl);
 }
 </script>
 </body></html>

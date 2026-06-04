@@ -30,7 +30,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,Microsoft YaHei,sans-serif;bac
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
-  const url = params.get("u") || params.get("url") || "";
+  const path = params.get("p") || params.get("path") || "";
+  const url = path ? "https://gitee.com/gaoahui_0/files2/raw/master/" + path + "?access_token=" + AUTH_CONFIG.giteeToken : "";
   if (!url) return;
 
   // Extract filename

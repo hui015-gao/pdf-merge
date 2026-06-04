@@ -143,7 +143,7 @@ async function doUpload(file) {
     st.innerHTML = "上传成功! <a href=\"" + url + "\" target=\"_blank\" style=\"color:#6366f1\">查看</a>";
 
     document.getElementById("qrContainer").innerHTML = "";
-    const dlUrl = "https://hui015-gao.github.io/pdf-merge/dl.html?u=" + encodeURIComponent(url);
+    const dlUrl = "https://hui015-gao.github.io/pdf-merge/dl.html?p=" + encodeURIComponent(path);
     qrInstance = new QRCode(document.getElementById("qrContainer"), {
       text: dlUrl, width: 280, height: 280, correctLevel: QRCode.CorrectLevel.H
     });

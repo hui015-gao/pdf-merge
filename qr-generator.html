@@ -131,10 +131,10 @@ async function doUpload(file) {
     const base64 = await new Promise((res,rej) => {
       const r = new FileReader(); r.onload = e => res(e.target.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file);
     });
-    const resp = await fetch("https://gitee.com/api/v5/repos/" + AUTH_CONFIG.giteeOwner + "/" + AUTH_CONFIG.giteeRepo + "/contents/" + path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ access_token: AUTH_CONFIG.giteeToken, content: base64, message: "Upload: " + file.name })
+    const resp = await fetch("https://api.github.com/repos/hui015-gao/pdf-merge/contents/" + path, {
+      method: "PUT",
+      headers: { "Authorization": "token " + AUTH_CONFIG.githubToken, "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "Upload: " + file.name, content: base64, branch: "master" })
     });
     if (!resp.ok) { const er = await resp.json(); throw new Error(er.message || "Upload failed"); }
     const data = await resp.json();

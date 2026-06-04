@@ -44,11 +44,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,Microsoft YaHei,sans-serif;bac
     .then(data => {
       if (!data.content) throw new Error("No content");
       // Decode base64
-      const byteString = atob(data.content.replace(/\s/g, ""));
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-      const blob = new Blob([ab]);
+      const resp2 = await fetch("data:application/octet-stream;base64," + data.content.replace(/\s/g, ""));
+      const blob = await resp2.blob();
       const url = URL.createObjectURL(blob);
       window._blobUrl = url;
       document.getElementById("status").textContent = "就绪 \u00b7 " + (data.size ? (data.size/1024).toFixed(0) + "KB" : "");

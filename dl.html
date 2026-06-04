@@ -19,7 +19,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Microsoft YaHei,sans-serif;bac
 <div class="icon">&#x1F4E5;</div>
 <div class="filename" id="fname">文件下载</div>
 <div class="status-text" id="status">准备中...</div>
-<a class="btn" id="dlBtn" href="#" target="_blank" rel="noreferrer">打开文件</a>
+<a class="btn" id="dlBtn" href="#" target="_blank">打开文件</a>
 <div class="hint" id="hint"></div>
 </div>
 
@@ -50,7 +50,7 @@ var ext=fn.split(".").pop().toLowerCase();
 var mimes={png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",pdf:"application/pdf",zip:"application/zip",mp4:"video/mp4",mp3:"audio/mpeg",txt:"text/plain",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
 var mime=mimes[ext]||"application/octet-stream";
 var dataUrl="data:"+mime+";base64,"+d.content.replace(/\s/g,"");
-document.getElementById("dlBtn").onclick=function(){window.open(dataUrl)};
+document.getElementById("dlBtn").href=dataUrl;
 document.getElementById("dlBtn").style.display="block";
 document.getElementById("status").textContent="就绪 \xb7 "+(d.content.length*0.75/1024).toFixed(0)+"KB";
 document.getElementById("dlBtn").textContent="打开文件";

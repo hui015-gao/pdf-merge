@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="免费在线二维码生成器，输入文字或链接即可生成二维码图片并下载。">
-<title>在线二维码生成器 - 免费、快速生成二维码</title>
+<meta name="description" content="免费在线二维码生成器，输入文字或链接即可生成二维码并下载PNG。">
+<title>在线二维码生成器</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;min-height:100vh;display:flex;flex-direction:column}
@@ -13,18 +13,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .nav a:hover{color:#1a73e8}
 .nav a.active{color:#1a73e8;border-bottom-color:#1a73e8;font-weight:600}
 .nav .brand{font-weight:700;font-size:1rem;color:#1a1a1a;margin-right:16px;padding:14px 8px}
-.container{max-width:600px;margin:0 auto;padding:32px 20px;flex:1}
+.container{max-width:600px;margin:0 auto;padding:24px 20px;flex:1}
 h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
-.sub{text-align:center;color:#5f6368;font-size:.9rem;margin-bottom:24px}
+.sub{text-align:center;color:#5f6368;font-size:.9rem;margin-bottom:20px}
 .input-group{background:#fff;border-radius:8px;padding:20px}
 .input-group textarea{width:100%;padding:12px;border:2px solid #e8eaed;border-radius:6px;font-size:.95rem;resize:vertical;min-height:80px;outline:none;font-family:inherit;transition:border-color .2s}
 .input-group textarea:focus{border-color:#1a73e8}
 .input-group .hint{font-size:.8rem;color:#80868b;margin-top:4px}
-.result-area{display:none;margin-top:24px;text-align:center}
-.result-area.show{display:block}
-.result-area canvas,#qrImage{max-width:260px;margin:0 auto;display:block}
-.actions{margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.btn{padding:10px 28px;border:none;border-radius:6px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s,transform .1s}
+.actions{margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{padding:10px 28px;border:none;border-radius:6px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s,transform .1s;font-family:inherit}
 .btn:active{transform:scale(.98)}
 .btn-primary{background:#1a73e8;color:#fff}
 .btn-primary:hover{background:#1557b0}
@@ -32,12 +29,13 @@ h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
 .btn-accent:hover{background:#0a773e}
 .btn-secondary{background:#fff;color:#5f6368;border:1px solid #dadce0}
 .btn-secondary:hover{background:#f0f0f0}
+.result-area{display:none;margin-top:20px;text-align:center}
+.result-area.show{display:block}
+.result-area img{max-width:260px;margin:0 auto}
 .download-actions{display:none;margin-top:16px;gap:10px;justify-content:center}
 .download-actions.show{display:flex}
 .footer{text-align:center;padding:24px 20px;color:#80868b;font-size:.82rem;border-top:1px solid #e8eaed;margin-top:auto}
-@media(max-width:600px){
-.container{padding:16px 10px}
-}
+@media(max-width:600px){.container{padding:16px 10px}}
 </style>
 </head>
 <body>
@@ -47,7 +45,7 @@ h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
 <a href="/pdf-merge/pdf-split.html">PDF拆分</a>
 <a href="/pdf-merge/image-compress.html">图片压缩</a>
 <a href="/pdf-merge/json-formatter.html">JSON格式化</a>
-<a href="/pdf-merge/qr-generator.html">二维码生成</a>
+<a href="/pdf-merge/qr-generator.html" class="active">二维码生成</a>
 <a href="/pdf-merge/markdown-editor.html">Markdown</a>
 <a href="/pdf-merge/base64.html">Base64</a>
 <a href="/pdf-merge/timestamp.html">时间戳</a>
@@ -58,63 +56,71 @@ h1{font-size:1.5rem;color:#1a1a1a;text-align:center;margin-bottom:4px}
 <p class="sub">输入文字或链接，即时生成二维码</p>
 
 <div class="input-group">
-<textarea id="input" placeholder="输入文字、网址或任意内容..." maxlength="2000"></textarea>
+<textarea id="input" placeholder="输入文字、网址或任意内容..." maxlength="2000" oninput="generateQR()"></textarea>
 <div class="hint" id="charCount">0 / 2000</div>
 </div>
 
 <div class="actions">
-<button class="btn btn-primary" id="generateBtn">生成二维码</button>
+<button class="btn btn-primary" onclick="generateQR()">生成二维码</button>
 </div>
 
-<div class="result-area" id="resultArea">
-<canvas id="qrCanvas"></canvas>
-</div>
+<div class="result-area" id="resultArea"><div id="qrContainer"></div></div>
 
 <div class="download-actions" id="downloadActions">
-<button class="btn btn-accent" id="downloadPNG">下载 PNG</button>
-<button class="btn btn-secondary" id="downloadSVG">下载 SVG</button>
+<button class="btn btn-accent" onclick="downloadPNG()">下载 PNG</button>
+<button class="btn btn-secondary" onclick="downloadSVG()">下载 SVG</button>
 </div>
 </div>
 
 <footer class="footer"><p>二维码在浏览器本地生成，内容不会上传</p></footer>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script>
-document.getElementById("input").addEventListener("input", function() {
+var qrDataURL = "";
+
+document.getElementById("input").addEventListener("input", function(){
 document.getElementById("charCount").textContent = this.value.length + " / 2000";
 });
-document.getElementById("generateBtn").addEventListener("click", function() {
-const text = document.getElementById("input").value.trim();
-if (!text) return;
-const canvas = document.getElementById("qrCanvas");
-const resultArea = document.getElementById("resultArea");
-const downloadActions = document.getElementById("downloadActions");
+
+function generateQR(){
+var text = document.getElementById("input").value.trim();
+if(!text) return;
 try {
-QRCode.toCanvas(canvas, text, { width: 260, margin: 1, color: { dark: "#000", light: "#fff" } }, function(err) {
-if (err) { alert("生成失败: " + err.message); return; }
-resultArea.classList.add("show");
-downloadActions.classList.add("show");
-});
+var qr = qrcode(0, "M");
+qr.addData(text);
+qr.make();
+var imgHtml = qr.createImgTag(5);
+document.getElementById("qrContainer").innerHTML = imgHtml;
+qrDataURL = qr.createDataURL(10);
+document.getElementById("resultArea").classList.add("show");
+document.getElementById("downloadActions").classList.add("show");
 } catch(e) {
-alert("请检查输入内容");
+alert("生成失败，请检查输入内容");
 }
-});
-document.getElementById("downloadPNG").addEventListener("click", function() {
-const canvas = document.getElementById("qrCanvas");
-const a = document.createElement("a");
-a.href = canvas.toDataURL("image/png");
+}
+
+function downloadPNG(){
+var a = document.createElement("a");
+a.href = qrDataURL;
 a.download = "qrcode.png";
 a.click();
-});
-document.getElementById("downloadSVG").addEventListener("click", function() {
-const canvas = document.getElementById("qrCanvas");
-const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + canvas.width + '" height="' + canvas.height + '"><image href="' + canvas.toDataURL() + '" width="' + canvas.width + '" height="' + canvas.height + '"/></svg>';
-const blob = new Blob([svg], { type: "image/svg+xml" });
-const a = document.createElement("a");
+}
+
+function downloadSVG(){
+try {
+var text = document.getElementById("input").value.trim();
+if(!text) return;
+var qr = qrcode(0, "M");
+qr.addData(text);
+qr.make();
+var svg = qr.createSvgTag(10);
+var blob = new Blob([svg], {type:"image/svg+xml"});
+var a = document.createElement("a");
 a.href = URL.createObjectURL(blob);
 a.download = "qrcode.svg";
 a.click();
-});
+} catch(e) { alert("SVG生成失败"); }
+}
 </script>
 </body>
 </html>

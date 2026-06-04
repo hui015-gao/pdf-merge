@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>二维码生成器 - 支持文本/链接/微信</title>
+<title>二维码生成器</title>
 <link rel="stylesheet" href="style.css">
 <style>
 .container{max-width:640px;margin:0 auto;padding:24px 20px}
@@ -13,9 +13,9 @@ h1{font-size:1.5rem;text-align:center;margin-bottom:4px}
 .input-area{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #eee}
 .input-area textarea{width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;min-height:80px;resize:vertical;outline:none;font-family:inherit;line-height:1.6}
 .input-area textarea:focus{border-color:#6366f1}
-.input-area .hint{font-size:.78rem;color:#94a3b8;margin-top:6px;line-height:1.5}
-.preview{text-align:center;margin:20px 0}
-.preview img{max-width:280px;border:12px solid #fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.hint{font-size:.78rem;color:#94a3b8;margin-top:6px;line-height:1.5}
+.preview{text-align:center;margin:20px 0;min-height:180px;display:flex;align-items:center;justify-content:center}
+#qrContainer canvas,#qrContainer img{max-width:280px;border:12px solid #fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
 .info-box{background:#eff6ff;border-radius:8px;padding:14px 18px;margin-top:12px;font-size:.85rem;color:#1e40af;line-height:1.6}
 .info-box code{background:#dbeafe;padding:2px 6px;border-radius:4px;font-size:.82rem}
 .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
@@ -25,7 +25,7 @@ h1{font-size:1.5rem;text-align:center;margin-bottom:4px}
 <div class="nav-back"><a href="/pdf-merge/">&larr; 返回工具集</a></div>
 <div class="container">
 <h1>二维码生成器</h1>
-<p class="sub">支持文本/网址/链接 &middot; 微信可扫</p>
+<p class="sub">文本/网址/文件链接 &middot; 中文完美支持 &middot; 微信可扫</p>
 
 <div class="mode-tabs">
 <button class="active" onclick="switchMode('text')">文本</button>
@@ -34,38 +34,37 @@ h1{font-size:1.5rem;text-align:center;margin-bottom:4px}
 </div>
 
 <div class="input-area" id="textMode">
-<textarea id="textInput" placeholder="输入任意文本内容，微信扫码即可查看..." oninput="generate()">你好！扫码查看这段文字</textarea>
-<div class="hint">文本模式：扫描二维码后直接显示文字内容。微信/浏览器均可扫。</div>
+<textarea id="textInput" placeholder="输入文字内容，中文可直接扫码显示..." oninput="generate()">你好！这是一段中文测试文字。微信扫码即可显示。</textarea>
+<div class="hint">文本模式：扫描后直接显示文字，中文完美支持。</div>
 </div>
 
 <div class="input-area" id="urlMode" style="display:none">
 <textarea id="urlInput" placeholder="粘贴网址，如 https://example.com" oninput="generate()"></textarea>
-<div class="hint">网址模式：扫描后直接打开网页。微信扫码后点击「在浏览器中打开」。</div>
+<div class="hint">网址模式：扫描后打开网页。</div>
 </div>
 
 <div class="input-area" id="fileMode" style="display:none">
-<textarea id="fileInput" placeholder="粘贴文件或图片的分享链接，如百度网盘/阿里云盘/蓝奏云链接" oninput="generate()"></textarea>
-<div class="hint">将图片/视频/文件上传到任意网盘 &rarr; 生成分享链接 &rarr; 粘贴到此处生成二维码。微信扫码可跳转下载。</div>
+<textarea id="fileInput" placeholder="粘贴网盘分享链接（百度网盘/阿里云盘/蓝奏云）" oninput="generate()"></textarea>
+<div class="hint">把文件上传到网盘 &rarr; 生成分享链接 &rarr; 粘贴到此处。扫描即可访问。</div>
 </div>
 
-<div class="preview" id="previewArea"><img id="qrImg" src="" alt="二维码" style="display:none"><div id="placeholder" style="color:#cbd5e1;padding:40px">输入内容后生成二维码</div></div>
+<div class="preview" id="previewArea"><div id="qrContainer"></div></div>
+
+<div class="info-box" id="wechatInfo" style="display:none"></div>
 
 <div class="actions">
 <button class="btn btn-success" onclick="downloadPNG()">下载 PNG</button>
 <button class="btn btn-outline" onclick="downloadSVG()">下载 SVG</button>
-<button class="btn btn-outline" onclick="copyForWechat()">微信专用</button>
 </div>
-
-<div class="info-box" id="wechatInfo" style="display:none"></div>
 </div>
 <footer class="footer"><p>二维码在浏览器本地生成，内容不会上传</p></footer>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
 <script src="auth-config.js"></script>
 <script src="auth-check.js"></script>
 <script>
 let currentMode = "text";
-let qrDataURL = "";
+let qrInstance = null;
 
 function switchMode(mode) {
   currentMode = mode;
@@ -84,44 +83,60 @@ function getInputText() {
 
 function generate() {
   const text = getInputText();
-  const img = document.getElementById("qrImg");
-  const placeholder = document.getElementById("placeholder");
+  const container = document.getElementById("qrContainer");
   const info = document.getElementById("wechatInfo");
-  
-  if (!text) { img.style.display = "none"; placeholder.style.display = "block"; info.style.display = "none"; return; }
-  
+  container.innerHTML = "";
+  qrInstance = null;
+
+  if (!text) { info.style.display = "none"; return; }
+
   try {
-    const qr = qrcode(0, "H"); // H = highest error correction (30%)
-    qr.addData(text);
-    qr.make();
-    qrDataURL = qr.createDataURL(12, 4); // cellSize=12, margin=4 (larger for WeChat)
-    img.src = qrDataURL;
-    img.style.display = "block";
-    placeholder.style.display = "none";
-    
-    // Show WeChat preview
+    qrInstance = new QRCode(container, {
+      text: text,
+      width: 280,
+      height: 280,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Show preview info
+    info.style.display = "block";
     if (currentMode === "text") {
-      info.style.display = "block";
-      info.innerHTML = "<strong>微信扫描效果：</strong>微信将直接显示以下文字<br><code>" + text.substring(0, 100).replace(/</g,"&lt;") + (text.length > 100 ? "..." : "") + "</code>";
+      info.innerHTML = "<strong>微信扫描效果：</strong>微信将直接显示以下文字<br><code>" + text.substring(0, 80).replace(/</g,"&lt;").replace(/&/g,"&amp;") + (text.length > 80 ? "..." : "") + "</code>";
     } else if (currentMode === "url") {
-      info.style.display = "block";
-      info.innerHTML = "<strong>微信扫描效果：</strong>微信将提示打开网页<br><code>" + text.substring(0, 60).replace(/</g,"&lt;") + "</code><br>点击「在浏览器中打开」即可访问";
+      info.innerHTML = "<strong>微信扫描效果：</strong>微信将提示打开网页<br><code>" + text.substring(0, 60).replace(/</g,"&lt;").replace(/&/g,"&amp;") + "</code><br>点击「在浏览器中打开」即可访问";
     } else {
-      info.style.display = "block";
       info.innerHTML = "<strong>微信扫描效果：</strong>微信将跳转到分享链接<br>用户可在微信内直接访问网盘链接下载文件";
     }
   } catch(e) {
-    img.style.display = "none";
-    placeholder.style.display = "block";
-    placeholder.textContent = "内容过长，请缩短后重试";
+    container.innerHTML = '<div style="color:#ef4444;padding:20px">内容过长，请缩短后重试</div>';
     info.style.display = "none";
   }
 }
 
+function getQRCanvas() {
+  const container = document.getElementById("qrContainer");
+  // qrcodejs2 creates a canvas or img element
+  const canvas = container.querySelector("canvas");
+  const img = container.querySelector("img");
+  if (canvas) return canvas;
+  if (img) {
+    // Convert img to canvas
+    const c = document.createElement("canvas");
+    c.width = img.width;
+    c.height = img.height;
+    c.getContext("2d").drawImage(img, 0, 0);
+    return c;
+  }
+  return null;
+}
+
 function downloadPNG() {
-  if (!qrDataURL) return;
+  const canvas = getQRCanvas();
+  if (!canvas) return;
   const a = document.createElement("a");
-  a.href = qrDataURL;
+  a.href = canvas.toDataURL("image/png");
   a.download = "qrcode.png";
   a.click();
 }
@@ -129,10 +144,12 @@ function downloadPNG() {
 function downloadSVG() {
   const text = getInputText();
   if (!text) return;
+
+  // Generate QR as SVG using qrcode-generator for SVG support
   const qr = qrcode(0, "H");
   qr.addData(text);
   qr.make();
-  const svg = qr.createSvgTag(12, 4);
+  const svg = qr.createSvgTag(10, 4);
   const blob = new Blob([svg], { type: "image/svg+xml" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -140,18 +157,6 @@ function downloadSVG() {
   a.click();
 }
 
-function copyForWechat() {
-  const text = getInputText();
-  if (!text) return;
-  const qr = qrcode(0, "H");
-  qr.addData(text);
-  qr.make();
-  const dataUrl = qr.createDataURL(16, 6); // Extra large for WeChat
-  // Copy as image for WeChat paste
-  fetch(dataUrl).then(r => r.blob()).then(blob => {
-    navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-    alert("二维码已复制到剪贴板，可在微信中粘贴发送");
-  }).catch(() => alert("复制失败，请下载PNG后发送到微信"));
-}
+generate();
 </script>
 </body></html>
